@@ -15,6 +15,8 @@ function RedisStorage(app, config) {
 
 /* RedisStorage::prototype */
 
+framework.extend(RedisStorage.prototype, framework.storageProto);
+
 framework.extend(RedisStorage.prototype, new function() {
   
   var redis = require('redis'),
