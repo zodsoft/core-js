@@ -1,9 +1,14 @@
 
 function Initialize(app) {
 
-  var redis = new framework.storage.redis(app, {host: 'localhost', port: 6379});
+  var storage = new framework.storage.redis(app, {host: 'localhost', port: 6379, db: 1});
 
-  console.exit(redis);
+  storage.set('hello', 'world', function(err) {
+    if (err) throw err
+    else {
+      console.log('successfully set value');
+    }
+  });
 
 }
 
