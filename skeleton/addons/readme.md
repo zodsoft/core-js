@@ -1,5 +1,5 @@
 
-## Application Addons
+# Application Addons
 
 This directory is optional, and contains the addons provided by the application.
 
