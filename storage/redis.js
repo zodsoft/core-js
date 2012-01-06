@@ -30,7 +30,7 @@ framework.extend(RedisStorage.prototype, new function() {
   this.__construct = function(app, config) {
     var self = this;
     this.app = app;
-    this.config = config;
+    this.config = config || {};
     this.className = this.constructor.name;
     
     // Set redis client
@@ -86,7 +86,7 @@ framework.extend(RedisStorage.prototype, new function() {
       }
       
       multi.exec(function(err, data) {
-        if (err) callback.call(self, err);
+        if (err) callback.call(self, err, null);
         else {
           for (i=0; i < keys.length; i++) {
             out[keys[i]] = data[i];
@@ -97,6 +97,17 @@ framework.extend(RedisStorage.prototype, new function() {
     }
   }
   
+  /** Storage API getHash */
+  
+  this.getHash = function(key, callback) {
+    var self = this;
+    this.client.hgetall(key, function(err, data) {
+      if (err) callback.call(self, err, null);
+      else {
+        callback.call(self, null, data);
+      }
+    })
+  }
   
   /** Storage API set */
   
@@ -136,6 +147,17 @@ framework.extend(RedisStorage.prototype, new function() {
     }
   }
   
+  /** Storage API setHash */
+  
+  this.setHash = function(key, object, callback) {
+    var self = this;
+    this.client.hmset(key, object, function(err, data) {
+      if (err) callback.call(self, err);
+      else {
+        callback.call(self, null);
+      }
+    });
+  }
   
   /** Storage API delete */
   
