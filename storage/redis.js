@@ -5,8 +5,10 @@
    
     {
       host: 'localhost',
-      port: 6379
-      db: 1
+      port: 6379,
+      db: 1,
+      pass: 'password'
+
     }
 
 */
@@ -24,21 +26,34 @@ framework.extend(RedisStorage.prototype, new function() {
   var redis = require('redis');
 
   this.options = {
-    parser: 'hiredis'
+    // Parser defaults to hiredis if installed
   }
   
   // Constructor
   this.__construct = function(app, config) {
+    var self = this;
     this.app = app;
     this.config = config;
     this.className = this.constructor.name;
     
     // Set redis client
     this.client = redis.createClient(config.port, config.host, this.options);
+
+    // Authenticate if password provided
+    if (typeof config.pass == 'string') {
+      client.auth(config.pass, function(err, res) {
+        if (err) throw err;
+      })
+    }
     
-    // Automatically select db if specified
+    // Handle error event
+    this.client.on('error', function(err) {
+      app.log(err);
+    });
+
+    // Select db if specified
     if (typeof config.db == 'number' && config.db !== 0) {
-      this.client.select(config.db, function(err, res) {
+      self.client.select(config.db, function(err, res) {
         if (err) throw err;
       });
     }
