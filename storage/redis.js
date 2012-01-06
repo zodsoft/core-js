@@ -40,7 +40,7 @@ framework.extend(RedisStorage.prototype, new function() {
     if (typeof config.pass == 'string') {
       client.auth(config.pass, function(err, res) {
         if (err) throw err;
-      })
+      });
     }
     
     // Handle error event
@@ -73,7 +73,7 @@ framework.extend(RedisStorage.prototype, new function() {
         else {
           callback.call(self, null, data);
         }
-      })
+      });
       
     // If key is an array
     } else if (util.isArray(key)) {
@@ -93,7 +93,7 @@ framework.extend(RedisStorage.prototype, new function() {
           }
           callback.call(self, null, out);
         }
-      })
+      });
     }
   }
   
@@ -106,7 +106,7 @@ framework.extend(RedisStorage.prototype, new function() {
       else {
         callback.call(self, null, data);
       }
-    })
+    });
   }
   
   /** Storage API set */
