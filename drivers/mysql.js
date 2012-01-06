@@ -28,7 +28,7 @@ framework.extend(MySQL.prototype, new function() {
     this.client = mysql.createClient(config);
     this.client.__query = this.client.query;
     this.client.query = cachedQuery;
-    framework.util.onlySetEnumerable(this, ['className']);
+    framework.util.onlySetEnumerable(this, ['className'], framework.driverProto);
   }
 
   /**

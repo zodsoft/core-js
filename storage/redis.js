@@ -19,7 +19,8 @@ framework.extend(RedisStorage.prototype, framework.storageProto);
 
 framework.extend(RedisStorage.prototype, new function() {
   
-  var redis = require('redis'),
+  var _ = require('underscore'),
+      redis = require('redis'),
       util = require('util');
 
   this.options = {
@@ -56,7 +57,7 @@ framework.extend(RedisStorage.prototype, new function() {
     }
     
     // Set enumerable properties
-    framework.util.onlySetEnumerable(this, ['className', 'config']);
+    framework.util.onlySetEnumerable(this, ['className', 'config'], framework.storageProto);
   }
   
 

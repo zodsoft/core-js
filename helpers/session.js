@@ -41,7 +41,7 @@ framework.extend(Session.prototype, new function() {
     this.config = config;
     this.redis = app.redisClients.sessionStore;
     this.className = this.constructor.name;
-    framework.onlySetEnumerable(this, ['className', 'sessCookie', 'hashCookie', 'salt']);
+    framework.onlySetEnumerable(this, ['className', 'sessCookie', 'hashCookie', 'salt'], this);
   }
 
   /**
