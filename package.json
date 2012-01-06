@@ -1,9 +1,9 @@
 {
-  "name"              : "CoreJS",
+  "name"              : "corejs",
   "description"       : "Web Application Framework for Node.js",
-  "version"           : "0.0.1",
+  "version"           : "0.0.0",
   "homepage"          : "http://core-js.org",
-  "repository"        : "https://github.com/derdesign/CoreJS",
+  "repository"        : "https://github.com/derdesign/core-js",
   "author"            : "Ernesto Mendez <der@der-design.com>",
   "license"           : "MIT",
   "main"              : "lib/framework",
