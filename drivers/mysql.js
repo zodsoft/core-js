@@ -28,7 +28,6 @@ framework.extend(MySQL.prototype, new function() {
       util = require('util'),
       regex = { endingComma: /, ?$/};
 
-  this.queryCache = {};
   this.maxCacheTimeout = 1 * 365 * 24 * 3600;
 
   // Constructor
@@ -36,7 +35,9 @@ framework.extend(MySQL.prototype, new function() {
     config = config || {};
     this.className = this.constructor.name;
     this.app = app;
+    this.config = config;
     this.storage = config.storage;
+    delete config.storage; // prevent conflicts with original config
     this.client = mysql.createClient(config);
     this.client.__query = this.client.query;
     this.client.query = cachedQuery;
