@@ -10,7 +10,7 @@ function MySQL(app, config) {
     password: 'db_password',
     database: 'db_name',
     debug: false,
-    storage: storage
+    cacheStore: storage
   } */
   
   this.constructor.prototype.__construct.call(this, app, config);
