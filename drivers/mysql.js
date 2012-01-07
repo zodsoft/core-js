@@ -33,8 +33,10 @@ framework.extend(MySQL.prototype, new function() {
 
   // Constructor
   this.__construct = function(app, config) {
+    config = config || {};
     this.className = this.constructor.name;
     this.app = app;
+    this.storage = config.storage;
     this.client = mysql.createClient(config);
     this.client.__query = this.client.query;
     this.client.query = cachedQuery;
@@ -758,7 +760,8 @@ framework.extend(MySQL.prototype, new function() {
    */
 
   function cachedQuery() {
-    var cacheID, cdata, invalidate, multi, params, timeout, self = this;
+    var cacheID, cdata, invalidate, multi, params, timeout, 
+        self = this;
     
     cdata = arguments[0];
     params = (2 <= arguments.length) ? Array.prototype.slice.call(arguments, 1) : [];
@@ -770,24 +773,29 @@ framework.extend(MySQL.prototype, new function() {
     cacheID = cdata.cacheID, timeout = cdata.timeout, invalidate = cdata.invalidate;
     if (invalidate != null) {
       if (!util.isArray(invalidate)) invalidate = [invalidate];
-      multi = this.redis.multi();
+      
       for (var i=0; i < invalidate.length; i++) {
         cacheID = invalidate[i];
-        multi.del("mysql_cache_" + cacheID);
+        invalidate[i] = "mysql_cache_" + cacheID;
       }
-      multi.exec(function(err, info) {
+
+      this.storage.delete(invalidate, function(err) {
         var callback;
         if (err) {
           self.app.log(err);
           callback = params.pop();
-          return typeof callback.apply == "function" ? callback.apply(self, [err, null, null]) : undefined;
+          (typeof callback.apply == "function") 
+          ? callback.apply(self, [err, null, null]) 
+          : undefined;
         } else {
           self.app.debug("Invalidated cacheID '" + (invalidate.toString()) + "'");
           self.client.__query.apply(self.client, params);
         }
       });
+      
     } else {
-      this.redis.get("mysql_cache_" + cacheID, function(err, cache) {
+      
+      this.storage.get("mysql_cache_" + cacheID, function(err, cache) {
         var callback, origCallback;
         if (err) {
           self.app.log(err);
@@ -813,10 +821,10 @@ framework.extend(MySQL.prototype, new function() {
                 cacheKey = "mysql_cache_" + cacheID;
                 if (!(timeout > 0)) timeout = self.maxCacheTimeout;
                 queryResults = [err, results, fields];
-                multi = self.redis.multi();
-                multi.set(cacheKey, JSON.stringify(queryResults));
-                multi.expire(cacheKey, timeout);
-                multi.exec(function(err, replies) {
+                
+                /* TODO: Cache timeout */
+                
+                self.storage.set(cacheKey, JSON.stringify(queryResults), function(err) {
                   if (err) {
                     self.app.log(err);
                     callback = params.pop();
@@ -828,9 +836,8 @@ framework.extend(MySQL.prototype, new function() {
                   }
                 });
               }
-              return null;
             });
-            return self.client.__query.apply(self.client, params);
+            self.client.__query.apply(self.client, params);
           }
         }
       });
