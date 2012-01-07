@@ -1,6 +1,6 @@
 
-function ExampleHelper() {
-  
+function ExampleHelper(app) {
+
 }
 
 module.exports = ExampleHelper;

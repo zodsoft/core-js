@@ -1,6 +1,6 @@
 
 function MyEngine(app) {
- 
+  
   // Whether or not the template rendering is asynchronous
   this.async = false;
  
