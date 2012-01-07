@@ -1,5 +1,5 @@
 
-function Application() { this.extends('application', arguments);
+function Application() {
  
 }
 
