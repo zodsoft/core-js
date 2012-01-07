@@ -1,5 +1,5 @@
 
-function Helper() { this.extends('helper');
+function Helper(app) { this.extends('helper');
   
 }
 

@@ -1,5 +1,5 @@
 
-function Model() { this.extends('model');
+function Model(app) { this.extends('model');
   
 }
 

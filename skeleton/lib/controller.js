@@ -1,5 +1,5 @@
 
-function Controller() { this.extends('controller');
+function Controller(app) { this.extends('controller');
 
 }
 

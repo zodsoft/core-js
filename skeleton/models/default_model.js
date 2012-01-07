@@ -1,6 +1,6 @@
 
-function DefaultModel() {
-  
+function DefaultModel(app) {
+ 
 }
 
 module.exports = DefaultModel;
