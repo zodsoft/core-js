@@ -721,6 +721,8 @@ framework.extend(MySQL.prototype, new function() {
     cdata = arguments[0];
     params = (2 <= arguments.length) ? Array.prototype.slice.call(arguments, 1) : [];
     
+    // If no caching data is specified, perform normal query
+    // TODO: Also return if storage is not available
     if (typeof cdata != 'object' || (cdata.cacheID == undefined && cdata.invalidate == undefined)) {
       this.client.__query.apply(this.client, [cdata].concat(Array.prototype.slice.call(params)));
       return;
