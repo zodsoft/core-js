@@ -3,6 +3,16 @@
 
 function MySQL(app, config) {
   
+  /** {
+    host: 'localhost',
+    port: 3306,
+    user: 'db_user',
+    password: 'db_password',
+    database: 'db_name',
+    debug: false,
+    storage: storage
+  } */
+  
   this.constructor.prototype.__construct.call(this, app, config);
   
 }
