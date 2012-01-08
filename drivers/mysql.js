@@ -74,11 +74,14 @@ framework.extend(MySQL.prototype, new function() {
         sql = o.sql || '',
         params = o.params || [],
         appendSql = o.appendSql || '';
+    
     if (typeof sql != 'string') cdata = sql, sql = sql.param;
+    
     if (!util.isArray(params)) params = [params];
+    
     args = [(sql + " " + appendSql).trim(), params, callback];
     if (cdata != null) args.unshift(cdata);
-    this.client.query.apply(this, args);
+    this.client.query.apply(this.client, args);
   }
 
   /**
@@ -90,16 +93,13 @@ framework.extend(MySQL.prototype, new function() {
     
     @example
 
-      db.exec('CREATE TABLE test_db (id AUTO_INCREMENT NOT NULL, PRIMARY KEY (id)', [], function(err, info) {
-        console.log([err, info]);
-      });
-
-      db.exec('CREATE TABLE test_db (id AUTO_INCREMENT NOT NULL, PRIMARY KEY (id)', function(err, info) {
-        console.log([err, info]);
+      db.exec({
+        sql: 'SHOW TABLES',
+      }, function(err, info) {
+        console.exit([err, info]);
       });
   
-    @param {string} query
-    @param {array} params
+    @param {object} o
     @param {function} callback
     @public
   */
@@ -107,18 +107,19 @@ framework.extend(MySQL.prototype, new function() {
   this.exec = function(o, callback) {
     var args, cdata, 
         self = this,
-        query = o.query || '',
+        sql = o.sql || '',
         params = o.params || [];
     
-    if (typeof query != 'string') cdata = query, query = query.param;
+    if (typeof sql != 'string') cdata = sql, sql = query.param;
     if (!util.isArray(params)) params = [params];
     
-    args = [query, params];
+    args = [sql, params];
     args.push(function(err, info) {
       callback.call(self.app, err, info);
     });
+    
     if (cdata != null) args.unshift(cdata);
-    this.client.query.apply(this, args);
+    this.client.query.apply(this.client, args);
   }
 
   /**
@@ -130,19 +131,15 @@ framework.extend(MySQL.prototype, new function() {
 
     @example
 
-      db.queryWhere('user=?, pass=?', [user, pass], 'users', 'id,user,pass,info', function(err, results, fields) {
-        console.log([err, results, fields]);
-      });
-
-      db.queryWhere('user=?, pass=?', [user, pass], 'users', function(err, results, fields) {
-        console.log([err, results, fields]);
+      db.queryWhere({
+        condition: 'id=?',
+        params: [1],
+        table: 'users'
+      }, function(err, results, fields) {
+        console.exit([err, results, fields]);
       });
   
-    @param {string} cond
-    @param {array} params
-    @param {string} table
-    @param {string} columns
-    @param {string} appendSql
+    @param {object} o
     @param {function} callback
     @public
    */
@@ -150,25 +147,25 @@ framework.extend(MySQL.prototype, new function() {
   this.queryWhere = function(o, callback) {
     var args, cdata, 
         self = this,
-        cond = o.cond || '',
+        condition = o.condition || '',
         params = o.params || [],
         table = o.table || '',
         columns = o.columns || '*',
         appendSql = o.appendSql || '';
     
-    if (typeof cond != 'string') cdata = cond, cond = cond.param;
+    if (typeof condition != 'string') cdata = condition, condition = condition.param;
     if (!util.isArray(params)) params = [params];
     
-    args = [("SELECT " + columns + " FROM " + table + " WHERE " + cond + " " + appendSql).trim(), params];
+    args = [("SELECT " + columns + " FROM " + table + " WHERE " + condition + " " + appendSql).trim(), params];
     args.push(function(err, results, fields) {
       callback.call(self.app, err, results, fields);
     });
     if (cdata != null) args.unshift(cdata);
-    this.client.query.apply(this, args);
+    this.client.query.apply(this.client, args);
   }
 
   /**
-    Queries specific columns from a table
+    Queries all entries from a table. Optionally fetches specific columns
   
     Provides: [err, results, fields]
 
@@ -176,17 +173,19 @@ framework.extend(MySQL.prototype, new function() {
 
     @example
 
-      db.queryField 'username', 'users', function(err, results, fields) {
-        console.log([err, results, fields]);
+      db.queryAll({
+        columns: 'user, pass',
+        table: 'users'
+      }, function(err, results, fields) {
+        console.exit([err, results, fields]);
       });
   
-    @param {string} columns
-    @param {string} appendSql
+    @param {object} o
     @param {function} callback
     @public
    */
 
-  this.queryField = function(o, callback) {
+  this.queryAll = function(o, callback) {
     var args, cdata, 
         self = this,
         columns = o.columns || '*',
@@ -196,11 +195,11 @@ framework.extend(MySQL.prototype, new function() {
     if (typeof columns != 'string') cdata = columns, columns = columns.param;
     
     args = [("SELECT " + columns + " FROM " + table + " " + appendSql).trim()];
-    args.push(function(err, results, fields) {
-      callback.call(self.app, err, results, fields);
+    args.push(function(err, results, columns) {
+      callback.call(self.app, err, results, columns);
     });
     if (cdata != null) args.unshift(cdata);
-    this.client.query.apply(this, args);
+    this.client.query.apply(this.client, args);
   }
 
   /**
@@ -212,22 +211,14 @@ framework.extend(MySQL.prototype, new function() {
     
     @example
 
-      db.queryById([1,2,3], 'users', 'id,username,password', function(err, results, fields) {
-        console.log([err, results, fields]);
-      });
-
-      db.queryById(1, 'users', 'id,username,password', function(err, results, fields) {
-        console.log([err, results, fields]);
-      });
-
-      db.queryById(1, 'users', function(err, results, fields) {
-        console.log([err, results, fields]);
+      db.queryById({
+        id: [1,3],
+        table: 'users'
+      }, function(err, results, fields) {
+        console.exit([err, results, fields]);
       });
     
-    @param {array|int} id
-    @param {string} table
-    @param {string} columns
-    @param {string} appendSql
+    @param {object} o
     @param {function} callback
     @public
    */
@@ -241,57 +232,16 @@ framework.extend(MySQL.prototype, new function() {
     
     if (typeof id == 'number') id = [id];
     
-    args = ["id IN (" + (id.toString()) + ")", [], table, columns, appendSql, callback];
-    if (cdata != null) {
-      cdata.param = args[0];
-      args[0] = cdata;
-    }
+    args = [{
+      condition: "id IN (" + (id.toString()) + ")",
+      table: table,
+      columns: columns,
+      appendSql: appendSql
+    }, callback];
+    
+    if (cdata != null) cdata.param = args[0], args[0] = cdata;
+      
     this.queryWhere.apply(this, args);
-  }
-
-  /**
-    Queries all the entries from a table
-  
-    Provides: [err, results, fields]
-
-    Cache: Store / {cacheId, timeout, param}
-    
-    @example
-
-      db.queryAll('users', 'id, username, password', 'DESC', function(err, results, fields) {
-        console.log([err, results, fields]);
-      });
-
-      db.queryAll('users', 'id, username, password', function(err, results, fields) {
-        console.log([err, results, fields]);
-      });
-
-      db.queryAll('users', function(err, results, fields) {
-        console.log([err, results, fields]);
-      });
-  
-    @param {string} table
-    @param {string} columns
-    @param {string} appendSql
-    @param {function} callback
-    @public
-   */
-
-  this.queryAll = function(o, callback) {
-    var args, cdata, 
-        self = this,
-        table = o.table || ''
-        columns = o.columns || '*',
-        appendSql = o.appendSql || '';
-    
-    if (typeof table != 'string') cdata = table, table = table.param;
-    
-    args = [("SELECT " + columns + " FROM " + table + " " + appendSql).trim(), []];
-    args.push(function(err, results, fields) {
-      callback.call(self.app, err, results, fields);
-    });
-    if (cdata != null) args.unshift(cdata);
-    this.client.query.apply(this, args);
   }
 
   /**
@@ -303,16 +253,14 @@ framework.extend(MySQL.prototype, new function() {
     
     @example
 
-      db.insertInto('users', [null, 'ernie', 'password'], function(err, info) {
-        console.log([err, info]);
-      };
-
-      db.insertInto('users', {name: 'ernie', password: 'password'}, function(err, info) {
-        console.log([err, info]);
-      };
+      db.insertInto({
+        table: 'users',
+        values: {user: 'hello', pass: 'passme'}
+      }, function(err, info) {
+        console.exit([err, info]);
+      });
   
-    @param {string} table
-    @param {object} fields
+    @param {object} o
     @param {function} callback
     @public
    */
@@ -321,27 +269,27 @@ framework.extend(MySQL.prototype, new function() {
     var args, cdata, params, query, 
         self = this,
         table = o.table || '',
-        fields = o.fields || {};
+        values = o.values || {};
     
     if (typeof table != 'string') cdata = table, table = table.param;
     
-    if (util.isArray(fields)) {
-      params = framework.util.strRepeat('?, ', fields.length).replace(regex.endingComma, '');
-      args = ["INSERT INTO " + table + " VALUES(" + params + ")", fields];
+    if (util.isArray(values)) {
+      params = framework.util.strRepeat('?, ', values.length).replace(regex.endingComma, '');
+      args = ["INSERT INTO " + table + " VALUES(" + params + ")", values];
     } else {
       query = "INSERT INTO " + table + " SET ";
-      if (fields.id == undefined) fields.id = null;
-      for (var key in fields) {
+      if (values.id == undefined) values.id = null;
+      for (var key in values) {
         query += key + "=?, ";
       }
       query = query.replace(regex.endingComma, '');
-      args = [query, _.values(fields)];
+      args = [query, _.values(values)];
     }
     args.push(function(err, info) {
       callback.call(self.app, err, info);
     });
     if (cdata != null) args.unshift(cdata);
-    this.client.query.apply(this, args);
+    this.client.query.apply(this.client, args);
   }
 
   /**
@@ -353,17 +301,14 @@ framework.extend(MySQL.prototype, new function() {
     
     @example
 
-      db.deleteById([1,2,3], 'users', function(err, info) {
-        console.log([err, info]);
-      });
-
-      db.deleteById(1, 'users', function(err, info) {
-        console.log([err, info]);
+      db.deleteById({
+        id: 4,
+        table: 'users'
+      }, function(err, info) {
+        console.exit([err, info]);
       });
   
-    @param {array|int} id
-    @param {string} table
-    @param {string} appendSql
+    @param {object} o
     @param {function} callback
     @public
     */
@@ -376,11 +321,14 @@ framework.extend(MySQL.prototype, new function() {
     
     if (typeof id == 'number') id = [id];
     
-    args = ["id IN (" + (id.toString()) + ")", [], table, appendSql, callback];
-    if (cdata != null) {
-      cdata.param = args[0];
-      args[0] = cdata;
-    }
+    args = [{
+      condition: "id IN (" + (id.toString()) + ")",
+      table: table,
+      appendSql: appendSql
+    }, callback]
+    
+    if (cdata != null) cdata.param = args[0], args[0] = cdata;
+    
     this.deleteWhere.apply(this, args);
   }
 
@@ -393,14 +341,15 @@ framework.extend(MySQL.prototype, new function() {
     
     @example
 
-      db.deleteWhere('user=?, pass=?', [user, pass], 'users', function(err, info) {
-        console.log([err, info]);
+      db.deleteWhere({
+        condition: 'id=?',
+        params: [5],
+        table: 'users'
+      }, function(err, info) {
+        console.exit([err, info]);
       });
   
-    @param {string} cond
-    @param {array} params
-    @param {string} table
-    @param {string} appendSql
+    @param {object} o
     @param {function} callback
     @public
    */
@@ -408,21 +357,23 @@ framework.extend(MySQL.prototype, new function() {
   this.deleteWhere = function(o, callback) {
     var args, cdata, 
         self = this,
-        cond = o.cond || '',
+        condition = o.condition || '',
         params = o.params || [],
         table = o.table || '',
         appendSql = o.appendSql || '';
-    
-    if (typeof cond != 'string') cdata = cond, cond = cond.param;
+        
+    if (typeof condition != 'string') cdata = condition, condition = condition.param;
     
     if (!util.isArray(params)) params = [params];
     
-    args = ["DELETE FROM " + table + " WHERE " + cond + " " + appendSql, params];
+    args = ["DELETE FROM " + table + " WHERE " + condition + " " + appendSql, params];
+    
     args.push(function(err, info) {
       callback.call(self.app, err, info);
     });
+    
     if (cdata != null) args.unshift(cdata);
-    this.client.query.apply(this, args);
+    this.client.query.apply(this.client, args);
   }
 
   /**
@@ -434,21 +385,17 @@ framework.extend(MySQL.prototype, new function() {
     
     @example
 
-      db.updateById([1,2,3], 'users', {user: 'ernie', pass: 'password'}, 'LIMIT 1', function(err, info) {
-        console.log([err, info]);
-      });
-
-      db.updateById([1,2,3], 'users', {user: 'ernie', pass: 'password'}, function(err, info) {
-        console.log([err, info]);
+      db.updateById({
+        id: 1,
+        table: 'users',
+        values: {user: 'ernie'}
+      }, function(err, info) {
+        console.exit([err, info]);
       });
   
-    @param {int} id
-    @param {string} table
-    @param {object} values
-    @param {string} appendSql
+    @param {object} o
     @param {function} callback
     @public
-    
    */
 
   this.updateById = function(o, callback) {
@@ -460,11 +407,15 @@ framework.extend(MySQL.prototype, new function() {
     
     if (typeof id == 'number') id = [id];
     
-    args = ["id IN (" + (id.toString()) + ")", [], table, values, appendSql, callback];
-    if (cdata != null) {
-      cdata.param = args[0];
-      args[0] = cdata;
-    }
+    args = [{
+      condition: "id IN (" + (id.toString()) + ")",
+      table: table,
+      values: values,
+      appendSql: appendSql
+    }, callback]
+    
+    if (cdata != null) cdata.param = args[0], args[0] = cdata;
+    
     this.updateWhere.apply(this, args);
   }
 
@@ -477,21 +428,16 @@ framework.extend(MySQL.prototype, new function() {
     
     @example
 
-      db.updateWhere('user=?, pass=?', [user, pass], 'users', {user: 'ernie', pass: 'password'}, 'LIMIT 1',
-        function(err, info) {
-          console.log([err, info]);
-        });
-
-      db.updateWhere('user=?, pass=?', [user, pass], 'users', {user: 'ernie', pass: 'password'}, 
-        function(err, info) {
-          console.log([err, info]);
-        });
+      db.updateWhere({
+        condition: 'id=?',
+        params: [1],
+        table: 'users',
+        values: {user: 'ernie'}
+      }, function(err, info) {
+        console.exit([err, info]);
+      });
     
-    @param {string} cond
-    @param {array} params
-    @param {string} table
-    @param {object} values
-    @param {string} appendSql
+    @param {object} o
     @param {function} callback
     @public
    */
@@ -499,13 +445,13 @@ framework.extend(MySQL.prototype, new function() {
   this.updateWhere = function(o, callback) {
     var args, cdata, query, 
         self = this,
-        cond = o.cond || '',
+        condition = o.condition || '',
         params = o.params || [],
         table = o.table || '',
         values = o.values || {},
         appendSql = o.appendSql || '';
     
-    if (typeof cond != 'string') cdata = cond, cond = cond.param;
+    if (typeof condition != 'string') cdata = condition, condition = condition.param;
     
     query = "UPDATE " + table + " SET ";
     
@@ -516,13 +462,17 @@ framework.extend(MySQL.prototype, new function() {
     }
     
     query = query.replace(regex.endingComma, '');
-    query += " WHERE " + cond + " " + appendSql;
+    query += " WHERE " + condition + " " + appendSql;
+    
     args = [query, _.values(values).concat(params)];
+    
     args.push(function(err, info) {
       callback.call(self.app, err, info);
     });
+    
     if (cdata != null) args.unshift(cdata);
-    this.client.query.apply(this, args);
+    
+    this.client.query.apply(this.client, args);
   }
 
   /**
@@ -534,52 +484,46 @@ framework.extend(MySQL.prototype, new function() {
     
     @example
 
-      db.countRows('users', function(err, count) {
-        console.log([err, count]);
-      });
+      db.countRows({table: 'users'}, callback);
 
-    @param {string} table
+    @param {object} o
     @param {function} callback
     @public
    */
 
-  this.countRows = function(table, callback) {
-    var args, cdata, self = this;
+  this.countRows = function(o, callback) {
+    var args, cdata, 
+        self = this,
+        table = o.table || '';
+        
     if (typeof table != 'string') cdata = table, table = table.param;
+    
     args = ["SELECT COUNT('') AS total FROM " + table, []];
     args.push(function(err, results, fields) {
       args = err ? [err, null] : [err, results[0].total];
       callback.apply(self.app, args);
     });
+    
     if (cdata != null) args.unshift(cdata);
-    this.client.query.apply(this, args);
+    
+    this.client.query.apply(this.client, args);
   }
 
   /**
     Performs a query by ID, returning an object with the found ID's.
 
-    Provides: [err, exists]
+    Provides: [err, results]
 
-    This function's behavior varies depending on input:
-
-      a) If id is int: exists is boolean
-      b) If id is array: exists is object
-    
     Cache: Store / {cacheId, timeout, param}
     
     @example
 
-      db.idExists([1,2,3], 'users' function(err, exists) {
-        console.log([err, exists]);
-      });
-
-      db.idExists(1, 'users', function(err, exists) {
-        console.log([err, exists]);
-      });
+      db.idExists({
+        id: [1,2],
+        table: 'users'
+      }, callback);
   
-    @param {int} id
-    @param {string} table
-    @param {string} columns
+    @param {object} o
     @param {function} callback
     @public
    */
@@ -589,13 +533,15 @@ framework.extend(MySQL.prototype, new function() {
         self = this,
         id = o.id,
         table = o.table || '',
-        columns = o.columns || '*';
+        columns = o.columns || '*',
+        appendSql = o.appendSql || '';
     
     if (! (typeof id == 'number' || util.isArray(id)) ) cdata = id, id = id.param;
     
     if (typeof id == 'number') id = [id];
     
-    args = [id, table, columns];
+    args = [o];
+    
     args.push(function(err, results, fields) {
       if (err) {
         callback.call(self.app, err, null);
@@ -619,10 +565,9 @@ framework.extend(MySQL.prototype, new function() {
         }
       }
     });
-    if (cdata != null) {
-      cdata.param = args[0];
-      args[0] = cdata;
-    }
+    
+    if (cdata != null) cdata.param = args[0], args[0] = cdata;
+    
     this.queryById.apply(this, args);
   }
 
@@ -635,19 +580,13 @@ framework.extend(MySQL.prototype, new function() {
     
     @example
 
-      db.recordExists('id=?', [1], 'users', 'id, user, pass', 'LIMIT 1', function(err, exists, found) {
-        console.log([err, exists, found]);
-      });
-
-      db.recordExists('id=?', [1], 'users', 'LIMIT 1', function(err, exists, found) {
-        console.log([err, exists, found]);
-      });
+      db.recordExists({
+        condition: 'id=?',
+        params: [1],
+        table: 'users'
+      }, callback);
     
-    @param {string} cond
-    @param {array} params
-    @param {string} table
-    @param {string} columns
-    @param {string} appendSql
+    @param {object} o
     @param {function} callback
     @public
    */
@@ -655,17 +594,18 @@ framework.extend(MySQL.prototype, new function() {
   this.recordExists = function(o, callback) {
     var args, cdata, 
         self = this,
-        cond = o.cond || '',
+        condition = o.condition || '',
         params = o.params || [],
         table = o.table || '',
         columns = o.columns || '*',
         appendSql = o.appendSql || '';
     
-    if (typeof cond != 'string') cdata = cond, cond = cond.param;
+    if (typeof condition != 'string') cdata = condition, condition = condition.param;
     
     if (!util.isArray(params)) params = [params];
     
-    args = [cond, params, table, columns, appendSql];
+    args = [o];
+    
     args.push(function(err, results, fields) {
       if (err) {
         callback.call(self.app, err, null, null);
@@ -677,10 +617,9 @@ framework.extend(MySQL.prototype, new function() {
         }
       }
     });
-    if (cdata != null) {
-      cdata.param = args[0];
-      args[0] = cdata;
-    }
+    
+    if (cdata != null) cdata.param = args[0], args[0] = cdata;
+      
     this.queryWhere.apply(this, args);
   }
 
