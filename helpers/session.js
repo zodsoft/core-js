@@ -38,7 +38,7 @@ framework.extend(Session.prototype, new function() {
     this.storage = config.storage;
     if (typeof this.storage == 'undefined') throw new Error('Session requires a storage');
     this.className = this.constructor.name;
-    framework.onlySetEnumerable(this, ['className', 'sessCookie', 'hashCookie', 'salt'], this);
+    framework.util.onlySetEnumerable(this, ['className', 'sessCookie', 'hashCookie', 'salt'], this);
   }
 
   /**
@@ -76,16 +76,16 @@ framework.extend(Session.prototype, new function() {
       });
     }
     
-    multi = this.redis.multi();
+    multi = this.storage.multi();
     if (!guest && req.__session.guest && req.hasCookie(this.sessCookie)) {
-      multi.del(req.getCookie(this.sessCookie));
+      multi.delete(req.getCookie(this.sessCookie));
     }
-    multi.hmset(hashes.sessId, data);
+    multi.setHash(hashes.sessId, data);
     multi.expire(hashes.sessId, expires);
     
-    
     return multi.exec(function(err, replies) {
-      if (!err) {
+      if (err) app.log(err);
+      else {
         res.setCookie(self.sessCookie, hashes.sessId, {
           expires: (persistent ? self.app.config.session.permanentExpires : null)
         });
@@ -121,8 +121,9 @@ framework.extend(Session.prototype, new function() {
       sessId = req.getCookie(this.sessCookie);
       fingerprint = this.getFingerprint(req, sessId);
       if (fingerprint == req.__session.fpr) {
-        this.redis.del(sessId, function(err, reply) {
-          if (! ( err || reply != 1 ) ) {
+        this.storage.delete(sessId, function(err) {
+          if (err) app.serverError(res, [err]);
+          else {
             res.removeCookies([self.sessCookie, self.hashCookie]);
             return callback.call(self);
           }
@@ -157,7 +158,7 @@ framework.extend(Session.prototype, new function() {
     sessHash = req.getCookie(this.hashCookie);
     fingerprint = self.getFingerprint(req, sessId);
     if (sessId) {
-      this.redis.hgetall(sessId, function(err, data) {
+      this.storage.getHash(sessId, function(err, data) {
         var expires, guest, hashes, multi, newHash, newSess, ua_md5, userAgent;
         guest = !(data.user != null);
         if (err) {
@@ -196,11 +197,11 @@ framework.extend(Session.prototype, new function() {
               newSess = hashes.sessId;
               newHash = hashes.fingerprint;
               expires = self.app.config.session[(data.pers ? 'permanentExpires' : (data.user ? 'temporaryExpires' : 'guestExpires'))];
-              multi = self.redis.multi();
-              multi.hset(sessId, 'fpr', newHash);
+              multi = self.storage.multi();
+              multi.set(sessId, 'fpr', newHash);
               multi.rename(sessId, newSess);
               multi.expire(newSess, expires);
-              return multi.exec(function(err, replies) {
+              multi.exec(function(err, replies) {
                 if (err) {
                   self.app.serverError(res, ['REDIS SERVER', err]);
                 } else if (replies[1] == 'OK' && replies[2] == 1) {

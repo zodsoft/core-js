@@ -195,6 +195,15 @@ framework.extend(RedisStorage.prototype, new function() {
     }
   }
   
+  /** Storage API rename */
+  
+  this.rename = function(oldkey, newkey, callback) {
+    var self = this;
+    this.client.rename(oldkey, newkey, function(err, result) {
+      callback.call(self, err);
+    });
+  }
+  
   /** Storage API expire */
   
   this.expire = function(key, timeout) {
