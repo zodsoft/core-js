@@ -194,6 +194,15 @@ framework.extend(RedisStorage.prototype, new function() {
     }
   }
   
+  /** Storage API expire */
+  
+  this.expire = function(key, timeout) {
+    var self = this;
+    this.client.expire(key, timeout, function(err, result) {
+      if (err) self.app.log(err);
+    });
+  }
+  
 });
 
 module.exports = RedisStorage;
