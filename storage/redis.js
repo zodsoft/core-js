@@ -3,11 +3,12 @@
 
 function RedisStorage(app, config) {
   
-  /** { host: 'localhost',
-        port: 6379,
-        db: 1,
-        pass: 'password'
-      } */
+  /** { 
+    host: 'localhost',
+    port: 6379,
+    db: 1,
+    pass: 'password'
+   } */
   
   this.constructor.prototype.__construct.call(this, app, config);
   
