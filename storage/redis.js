@@ -58,7 +58,7 @@ framework.extend(RedisStorage.prototype, new function() {
     }
     
     // Set enumerable properties
-    framework.util.onlySetEnumerable(this, ['className', 'config'], framework.storageProto);
+    framework.util.onlySetEnumerable(this, ['className', 'config']);
   }
   
 

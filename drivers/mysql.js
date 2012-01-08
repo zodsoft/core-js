@@ -44,7 +44,7 @@ framework.extend(MySQL.prototype, new function() {
     if (this.storage != null) this.setCacheFunc(this.client, 'query');
     
     // Only set important properties enumerable
-    framework.util.onlySetEnumerable(this, ['className'], framework.driverProto);
+    framework.util.onlySetEnumerable(this, ['className']);
   }
   
   /**
