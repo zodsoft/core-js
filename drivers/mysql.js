@@ -28,8 +28,6 @@ framework.extend(MySQL.prototype, new function() {
       util = require('util'),
       regex = { endingComma: /, ?$/};
 
-  this.maxCacheTimeout = 1 * 365 * 24 * 3600;
-
   // Constructor
   this.__construct = function(app, config) {
     config = config || {};
