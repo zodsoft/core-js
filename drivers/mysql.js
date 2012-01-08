@@ -34,16 +34,14 @@ framework.extend(MySQL.prototype, new function() {
     this.className = this.constructor.name;
     this.app = app;
     this.config = config;
-    this.storage = config.storage;
+    this.storage = config.storage || app.storage.cache;
     delete config.storage; // prevent conflicts with original config
-    
-    /* TODO: Disable caching when config.storage is not set */
     
     // Set client
     this.client = mysql.createClient(config);
     
     // Set caching function
-    this.setCacheFunc(this.client, 'query');
+    if (this.storage != null) this.setCacheFunc(this.client, 'query');
     
     // Only set important properties enumerable
     framework.util.onlySetEnumerable(this, ['className'], framework.driverProto);
