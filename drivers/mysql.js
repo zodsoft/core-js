@@ -38,12 +38,17 @@ framework.extend(MySQL.prototype, new function() {
     this.config = config;
     this.storage = config.storage;
     delete config.storage; // prevent conflicts with original config
+    
+    // Set client
     this.client = mysql.createClient(config);
-    this.client.__query = this.client.query;
-    this.client.query = cachedQuery;
+    
+    // Set caching function
+    this.setCacheFunc(this.client, 'query');
+    
+    // Only set important properties enumerable
     framework.util.onlySetEnumerable(this, ['className'], framework.driverProto);
   }
-
+  
   /**
     Performs a manual SQL Query
   
@@ -702,103 +707,6 @@ framework.extend(MySQL.prototype, new function() {
       args[0] = cdata;
     }
     this.queryWhere.apply(this, args);
-  }
-
-  
-  /* Private functions */
-  
-  
-  /**
-    Internal query caching function
-    
-    @private
-   */
-
-  function cachedQuery() {
-    var cacheID, cdata, invalidate, multi, params, timeout, 
-        self = this;
-    
-    cdata = arguments[0];
-    params = (2 <= arguments.length) ? Array.prototype.slice.call(arguments, 1) : [];
-    
-    // If no caching data is specified, perform normal query
-    // TODO: Also return if storage is not available
-    if (typeof cdata != 'object' || (cdata.cacheID == undefined && cdata.invalidate == undefined)) {
-      this.client.__query.apply(this.client, [cdata].concat(Array.prototype.slice.call(params)));
-      return;
-    }
-    cacheID = cdata.cacheID, timeout = cdata.timeout, invalidate = cdata.invalidate;
-    if (invalidate != null) {
-      if (!util.isArray(invalidate)) invalidate = [invalidate];
-      
-      for (var i=0; i < invalidate.length; i++) {
-        cacheID = invalidate[i];
-        invalidate[i] = "mysql_cache_" + cacheID;
-      }
-
-      this.storage.delete(invalidate, function(err) {
-        var callback;
-        if (err) {
-          self.app.log(err);
-          callback = params.pop();
-          (typeof callback.apply == "function") 
-          ? callback.apply(self, [err, null, null]) 
-          : undefined;
-        } else {
-          self.app.debug("Invalidated cacheID '" + (invalidate.toString()) + "'");
-          self.client.__query.apply(self.client, params);
-        }
-      });
-      
-    } else {
-      
-      this.storage.get("mysql_cache_" + cacheID, function(err, cache) {
-        var callback, origCallback;
-        if (err) {
-          self.app.log(err);
-          callback = params.pop();
-          return typeof callback.apply == "function" ? callback.apply(self, [err, null, null]) : undefined;
-        } else {
-          if (cache != null) {
-            self.app.debug("Using cache for cacheID '" + cacheID + "'");
-            cache = JSON.parse(cache);
-            origCallback = params.pop();
-            return typeof origCallback.apply == "function" ? origCallback.apply(self, cache) : undefined;
-          } else {
-            origCallback = params.pop();
-            params.push(function(err, results, fields) {
-              var cacheKey, queryResults;
-              if (err) {
-                self.app.log(err);
-                callback = params.pop();
-                if (typeof callback.apply == "function") {
-                  callback.apply(self, [err, null, null]);
-                }
-              } else {
-                cacheKey = "mysql_cache_" + cacheID;
-                if (!(timeout > 0)) timeout = self.maxCacheTimeout;
-                queryResults = [err, results, fields];
-                
-                /* TODO: Cache timeout */
-                
-                self.storage.set(cacheKey, JSON.stringify(queryResults), function(err) {
-                  if (err) {
-                    self.app.log(err);
-                    callback = params.pop();
-                    return typeof callback.apply == "function" ? callback.apply(self, [err, null, null]) : undefined;
-                  } else {
-                    self.app.debug("Stored new cache for cacheID '" + cacheID + "'. Expires " 
-                    + ((new Date(Date.now() + timeout * 1000)).toString()));
-                    return origCallback.apply(self, queryResults);
-                  }
-                });
-              }
-            });
-            self.client.__query.apply(self.client, params);
-          }
-        }
-      });
-    }
   }
 
 });
