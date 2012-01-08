@@ -1,20 +1,16 @@
 
-/* Session 
-
-    Configuration:
-    
-    {
-      loginUrl: '/login',
-      guestSessions: false,
-      regenInterval: 5 * 60,
-      permanentExpires: 30 * 24 * 3600,
-      temporaryExpires: 24 * 3600,
-      guestExpires: 7 * 24 * 3600
-    }
-
-*/
+/* Session */
 
 function Session(app, config) {
+  
+  /** { 
+    guestSessions: false,
+    regenInterval: 5 * 60,
+    permanentExpires: 30 * 24 * 3600,
+    temporaryExpires: 24 * 3600,
+    guestExpires: 7 * 24 * 3600,
+    storage: [Object storage]
+  } */
   
   this.constructor.prototype.__construct.call(this, app, config);
   
@@ -38,8 +34,8 @@ framework.extend(Session.prototype, new function() {
   // Constructor
   this.__construct = function(app, config) {
     this.app = app;
-    this.config = config;
-    this.redis = app.redisClients.sessionStore;
+    this.config = config || {};
+    this.storage = config.storage;
     this.className = this.constructor.name;
     framework.onlySetEnumerable(this, ['className', 'sessCookie', 'hashCookie', 'salt'], this);
   }
@@ -78,12 +74,15 @@ framework.extend(Session.prototype, new function() {
         pers: (persistent ? 1 : 0)
       });
     }
+    
     multi = this.redis.multi();
     if (!guest && req.__session.guest && req.hasCookie(this.sessCookie)) {
       multi.del(req.getCookie(this.sessCookie));
     }
     multi.hmset(hashes.sessId, data);
     multi.expire(hashes.sessId, expires);
+    
+    
     return multi.exec(function(err, replies) {
       if (!err) {
         res.setCookie(self.sessCookie, hashes.sessId, {
