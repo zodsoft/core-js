@@ -36,6 +36,7 @@ framework.extend(Session.prototype, new function() {
     this.app = app;
     this.config = config || {};
     this.storage = config.storage;
+    if (typeof this.storage == 'undefined') throw new Error('Session requires a storage');
     this.className = this.constructor.name;
     framework.onlySetEnumerable(this, ['className', 'sessCookie', 'hashCookie', 'salt'], this);
   }
