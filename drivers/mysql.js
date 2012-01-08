@@ -39,6 +39,8 @@ framework.extend(MySQL.prototype, new function() {
     this.storage = config.storage;
     delete config.storage; // prevent conflicts with original config
     
+    /* TODO: Disable caching when config.storage is not set */
+    
     // Set client
     this.client = mysql.createClient(config);
     
