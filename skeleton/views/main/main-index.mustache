@@ -1,7 +1,7 @@
 <h1>{{app.config.title}}</h1>
 
 {{#session.user}}
-<p>Welcome <strong>{{session.user}}</strong>!</p>
+<p>Welcome <strong>{{session.user}}</strong>! <a href="/logout">Logout &rarr;</a></p>
 {{/session.user}}{{^session.user}}
 <p>You are not logged in. <a href="/auth">Authenticate &rarr;</a></p>
 {{/session.user}}
