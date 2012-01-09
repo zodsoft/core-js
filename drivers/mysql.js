@@ -34,7 +34,7 @@ framework.extend(MySQL.prototype, new function() {
     this.className = this.constructor.name;
     this.app = app;
     this.config = config;
-    this.storage = (config.storage || app.storage.driver || app.storage.cache);
+    this.storage = (config.storage || app.cache.driver || app.cache.default);
     delete config.storage; // prevent conflicts with original config
     
     // Set client
