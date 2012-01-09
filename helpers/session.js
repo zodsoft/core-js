@@ -51,6 +51,7 @@ framework.extend(SessionHelper.prototype, new function() {
     
     // Provide `session`
     app.supports.session = true;
+    app.session = this;
     
     framework.util.onlySetEnumerable(this, ['className', 'sessCookie', 'hashCookie', 'salt', 'storage']);
   }
