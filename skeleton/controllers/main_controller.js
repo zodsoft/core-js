@@ -8,7 +8,8 @@ function MainController() {
   });
   
   get('/login', function(req, res) {
-    res.rawHttpMessage('Please <a href="/auth">authenticate</a>');
+    if (req.__session.user) app.home(res)
+    else res.rawHttpMessage('Please <a href="/auth">authenticate</a>');
   });
   
   get('/auth', function(req ,res) {

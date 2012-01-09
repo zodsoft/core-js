@@ -161,6 +161,24 @@ framework.extend(RedisStorage.prototype, new function() {
     });
   }
   
+  /** Storage API updateHash */
+  
+  this.updateHash = function(key, object, callback) {
+    var key, self = this,
+        args = [key];
+        
+    for (key in object) {
+      args.push(key);
+      args.push(object[key]);
+    }
+    
+    args.push(function(err, results) {
+      callback.call(self, err);
+    });
+    
+    this.client.hset.apply(this.client, args);
+  }
+  
   /** Storage API delete */
   
   this.delete = function(key, callback) {

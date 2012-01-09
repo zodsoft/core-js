@@ -1,9 +1,14 @@
 
 function Initialize(app) {
 
-  app.storage.cache = new framework.storage.redis(app, {});
-
-  app.enable('session', {});
+  var storage = new framework.storage.redis(app, {}),
+      multi = storage.multi();
+      
+  multi.setHash('hash', {name: 'ernie', age: 28});
+  multi.updateHash('ernie', {age: 99});
+  multi.exec(function(err, results) {
+    console.exit([err, results]);
+  })
   
 }
 
