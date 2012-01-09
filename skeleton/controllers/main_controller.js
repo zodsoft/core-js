@@ -12,11 +12,11 @@ function MainController() {
   });
   
   get('/auth', function(req ,res) {
-   if (req.__session.user) app.home(res);
-   else {
-     app.session.create(req, res, {user: 'ernie'}, true, function(session) {
-       app.home('res');
-     });
+    if (req.__session.user) app.home(res);
+    else {
+      app.session.create(req, res, {user: 'ernie'}, true, function(session) {
+       app.home(res);
+      });
    }
   });
   

@@ -206,10 +206,10 @@ framework.extend(RedisStorage.prototype, new function() {
   
   /** Storage API expire */
   
-  this.expire = function(key, timeout) {
+  this.expire = function(key, timeout, callback) {
     var self = this;
     this.client.expire(key, timeout, function(err, result) {
-      if (err) self.app.log(err);
+      callback.call(self, err);
     });
   }
   
