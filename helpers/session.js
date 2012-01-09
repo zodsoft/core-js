@@ -1,7 +1,7 @@
 
 /* Session */
 
-function Session(app, config) {
+function SessionHelper(app, config) {
   
   /** { 
     guestSessions: false,
@@ -18,7 +18,7 @@ function Session(app, config) {
 
 /* Session::prototype */
 
-framework.extend(Session.prototype, new function() {
+framework.extend(SessionHelper.prototype, new function() {
   
   var _ = require('underscore'),
       crypto = require('crypto'),
@@ -33,12 +33,26 @@ framework.extend(Session.prototype, new function() {
 
   // Constructor
   this.__construct = function(app, config) {
+    
+    config = config || {};
     this.app = app;
-    this.config = config || {};
+    
+    this.config = _.extend({
+      guestSessions: false,
+      regenInterval: 5 * 60,
+      permanentExpires: 30 * 24 * 3600,
+      temporaryExpires: 24 * 3600,
+      guestExpires: 7 * 24 * 3600,
+    }, config);
+    
     this.storage = (config.storage || app.storage.session || app.storage.cache);
     if (typeof this.storage == 'undefined') throw new Error('Session requires a storage');
     this.className = this.constructor.name;
-    framework.util.onlySetEnumerable(this, ['className', 'sessCookie', 'hashCookie', 'salt']);
+    
+    // Provide `session`
+    app.supports.session = true;
+    
+    framework.util.onlySetEnumerable(this, ['className', 'sessCookie', 'hashCookie', 'salt', 'storage']);
   }
 
   /**
@@ -65,8 +79,8 @@ framework.extend(Session.prototype, new function() {
     hashes = this.createHash(userAgent, guest);
     
     expires = (persistent) 
-    ? this.app.config.session.permanentExpires 
-    : (guest ? this.app.config.session.guestExpires : this.app.config.session.temporaryExpires);
+    ? this.config.permanentExpires 
+    : (guest ? this.config.guestExpires : this.config.temporaryExpires);
     
     if (!guest) {
       data = _.extend(data, {
@@ -87,11 +101,11 @@ framework.extend(Session.prototype, new function() {
       if (err) app.log(err);
       else {
         res.setCookie(self.sessCookie, hashes.sessId, {
-          expires: (persistent ? self.app.config.session.permanentExpires : null)
+          expires: (persistent ? self.config.permanentExpires : null)
         });
         if (!guest) {
           res.setCookie(self.hashCookie, hashes.fingerprint, {
-            expires: self.app.config.session.regenInterval
+            expires: self.config.regenInterval
           });
         }
         if (guest) data.guest = parseInt(data.guest);
@@ -196,7 +210,7 @@ framework.extend(Session.prototype, new function() {
               hashes = self.createHash(userAgent);
               newSess = hashes.sessId;
               newHash = hashes.fingerprint;
-              expires = self.app.config.session[(data.pers ? 'permanentExpires' : (data.user ? 'temporaryExpires' : 'guestExpires'))];
+              expires = self.config[(data.pers ? 'permanentExpires' : (data.user ? 'temporaryExpires' : 'guestExpires'))];
               multi = self.storage.multi();
               multi.set(sessId, 'fpr', newHash);
               multi.rename(sessId, newSess);
@@ -209,7 +223,7 @@ framework.extend(Session.prototype, new function() {
                     expires: (data.pers ? expires : void 0)
                   });
                   res.setCookie(self.hashCookie, newHash, {
-                    expires: self.app.config.session.regenInterval
+                    expires: self.config.regenInterval
                   });
                   req.__cookies[self.sessCookie.toLowerCase()] = newSess;
                   data.fpr = req.__cookies[self.hashCookie.toLowerCase()] = newHash;
@@ -230,7 +244,7 @@ framework.extend(Session.prototype, new function() {
           }
         }
       });
-    } else if (this.app.config.session.guestSessions) {
+    } else if (this.config.guestSessions) {
       res.removeCookie(this.hashCookie);
       this.createGuestSession(req, res, callback);
     } else {
@@ -323,4 +337,4 @@ framework.extend(Session.prototype, new function() {
   
 });
 
-module.exports = Session;
+module.exports = SessionHelper;
