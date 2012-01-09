@@ -9,7 +9,7 @@ function MainController() {
   
   public_get('/login', function(req, res) {
     if (req.__session.user) app.home(res)
-    else res.rawHttpMessage('Please <a href="/auth">authenticate</a>');
+    else res.rawHttpMessage('You are not logged in. <a href="/auth">Authenticate &rarr;</a>');
   });
   
   public_get('/auth', function(req ,res) {
