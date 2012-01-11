@@ -1,10 +1,6 @@
 
 function GenericModel(app) {
 
-  /* Query Params: Defines how models are retrieved */
-
-  this.queryBy = 'id';
-
   /* Properties. The default value sets the type */
 
   this.properties = {
