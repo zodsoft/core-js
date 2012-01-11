@@ -1,10 +1,7 @@
 
 function UsersModel(app) {
 
-  this.driver = app.driver('mysql', {
-    user: 'db_user', 
-    password: 'db_pass', 
-    database: 'test_db'});
+  this.driver = app.drivers.mysql;
 
   this.properties = {
     id    : {type: 'integer', unique: true},
