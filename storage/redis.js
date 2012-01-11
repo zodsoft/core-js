@@ -32,6 +32,7 @@ framework.extend(RedisStorage.prototype, new function() {
   this.__construct = function(app, config) {
     var self = this;
     this.app = app;
+    this.db = 0;
     this.config = config || {};
     this.className = this.constructor.name;
     
@@ -52,13 +53,14 @@ framework.extend(RedisStorage.prototype, new function() {
 
     // Select db if specified
     if (typeof config.db == 'number' && config.db !== 0) {
+      this.db = config.db;
       self.client.select(config.db, function(err, res) {
         if (err) throw err;
       });
     }
     
     // Set enumerable properties
-    framework.util.onlySetEnumerable(this, ['className', 'config']);
+    framework.util.onlySetEnumerable(this, ['className', 'db']);
   }
   
 
