@@ -1,21 +1,18 @@
 
 function GenericModel(app) {
 
-  /* Properties. The default value sets the type */
-
   this.properties = {
-    name: '',
-    email: '',
-    limit: 3,
-    hello: true,
-    stuff: null
+    id    : {type: 'integer', unique: true}
+    name  : {type: 'string'},
+    email : {type: 'string'},
+    limit : {type: 'integer', default: 3},
+    hello : {type: 'boolean', default: true},
+    date  : {type: 'timestamp'}
   }
 
-  /* Relationships: Take string/array */
-
   this.relationships = {
-    hasOne: ['job', 'car', 'dog'],
-    hasMany: ['friends', 'colleagues']
+    hasOne  : ['job', 'car', 'dog'],
+    hasMany : ['friends', 'colleagues']
   }
   
 }
