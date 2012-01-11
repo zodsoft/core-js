@@ -3,11 +3,13 @@ function DefaultModel(app) {
 
   // Property Definitions
 
-  this.name = '';
-  this.email = '';
-  this.limit = 3;
-  this.hello = true;
-  this.stuff = null;
+  this.properties = {
+    name: '',
+    email: '',
+    limit: 3,
+    hello: true,
+    stuff: null
+  }
 
   // Relationships
   
