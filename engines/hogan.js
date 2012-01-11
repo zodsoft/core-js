@@ -22,7 +22,7 @@ framework.extend(Hogan.prototype, new function() {
   
   this.multiPart = true;
   
-  this.extensions = ['hogan'];
+  this.extensions = ['mustache'];
   
   this.render = function(data, vars) {
 

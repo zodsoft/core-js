@@ -21,7 +21,7 @@ framework.extend(Handlebars.prototype, new function() {
   
   this.multiPart = true;
   
-  this.extensions = ['mustache'];
+  this.extensions = ['handlebars'];
   
   this.render = function(data) {
 
