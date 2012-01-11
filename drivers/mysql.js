@@ -34,16 +34,22 @@ framework.extend(MySQL.prototype, new function() {
     this.className = this.constructor.name;
     this.app = app;
     this.config = config;
-    this.storage = (config.storage || app.cache.driver || app.cache.default);
-    delete config.storage; // prevent conflicts with original config
     
-    // Set client
+    // 1. Set client
     this.client = mysql.createClient(config);
     
-    // Set caching function
+    // 2. Assign storage
+    if (typeof config.storage == 'string') {
+      this.storage = app.getResource('storages/' + config.storage);
+    }
+    
+    // 3. Set calling context (used by caching mechanism)
+    this.context = (this.storage) ? this : this.client;
+    
+    // 4. Set caching function
     if (this.storage != null) this.setCacheFunc(this.client, 'query');
     
-    // Only set important properties enumerable
+    // 5. Only set important properties enumerable
     framework.util.onlySetEnumerable(this, ['className']);
   }
   
@@ -81,7 +87,7 @@ framework.extend(MySQL.prototype, new function() {
     
     args = [(sql + " " + appendSql).trim(), params, callback];
     if (cdata != null) args.unshift(cdata);
-    this.client.query.apply(this.client, args);
+    this.client.query.apply(this.context, args);
   }
 
   /**
@@ -119,7 +125,7 @@ framework.extend(MySQL.prototype, new function() {
     });
     
     if (cdata != null) args.unshift(cdata);
-    this.client.query.apply(this.client, args);
+    this.client.query.apply(this.context, args);
   }
 
   /**
@@ -161,7 +167,7 @@ framework.extend(MySQL.prototype, new function() {
       callback.call(self.app, err, results, fields);
     });
     if (cdata != null) args.unshift(cdata);
-    this.client.query.apply(this.client, args);
+    this.client.query.apply(this.context, args);
   }
 
   /**
@@ -199,7 +205,7 @@ framework.extend(MySQL.prototype, new function() {
       callback.call(self.app, err, results, columns);
     });
     if (cdata != null) args.unshift(cdata);
-    this.client.query.apply(this.client, args);
+    this.client.query.apply(this.context, args);
   }
 
   /**
@@ -289,7 +295,7 @@ framework.extend(MySQL.prototype, new function() {
       callback.call(self.app, err, info);
     });
     if (cdata != null) args.unshift(cdata);
-    this.client.query.apply(this.client, args);
+    this.client.query.apply(this.context, args);
   }
 
   /**
@@ -373,7 +379,7 @@ framework.extend(MySQL.prototype, new function() {
     });
     
     if (cdata != null) args.unshift(cdata);
-    this.client.query.apply(this.client, args);
+    this.client.query.apply(this.context, args);
   }
 
   /**
@@ -472,7 +478,7 @@ framework.extend(MySQL.prototype, new function() {
     
     if (cdata != null) args.unshift(cdata);
     
-    this.client.query.apply(this.client, args);
+    this.client.query.apply(this.context, args);
   }
 
   /**
@@ -506,7 +512,7 @@ framework.extend(MySQL.prototype, new function() {
     
     if (cdata != null) args.unshift(cdata);
     
-    this.client.query.apply(this.client, args);
+    this.client.query.apply(this.context, args);
   }
 
   /**

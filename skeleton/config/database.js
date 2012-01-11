@@ -7,7 +7,7 @@ module.exports = {
   
   mysql: {
     user: 'db_user',
-    password: 'db_password',
+    password: 'db_pass',
     database: 'test_db',
     storage: 'redis'
   }
