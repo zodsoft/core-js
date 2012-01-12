@@ -85,6 +85,8 @@ framework.extend(MySQL.prototype, new function() {
     
     args = [(sql + " " + appendSql).trim(), params, callback];
     
+    this.addCacheData(o, args);
+    
     this.client.query.apply(this.context, args);
   }
 
@@ -109,12 +111,11 @@ framework.extend(MySQL.prototype, new function() {
   */
 
   this.exec = function(o, callback) {
-    var args, cdata, 
+    var args, 
         self = this,
         sql = o.sql || '',
         params = o.params || [];
     
-    if (typeof sql != 'string') cdata = sql, sql = query.param;
     if (!util.isArray(params)) params = [params];
     
     args = [sql, params];
@@ -122,7 +123,8 @@ framework.extend(MySQL.prototype, new function() {
       callback.call(self.app, err, info);
     });
     
-    if (cdata != null) args.unshift(cdata);
+    this.addCacheData(o, args);
+    
     this.client.query.apply(this.context, args);
   }
 
@@ -198,13 +200,14 @@ framework.extend(MySQL.prototype, new function() {
         table = o.table || '',
         appendSql = o.appendSql || '';
     
-    if (typeof columns != 'string') cdata = columns, columns = columns.param;
-    
     args = [("SELECT " + columns + " FROM " + table + " " + appendSql).trim()];
+    
     args.push(function(err, results, columns) {
       callback.call(self.app, err, results, columns);
     });
-    if (cdata != null) args.unshift(cdata);
+    
+    this.addCacheData(o, args);
+
     this.client.query.apply(this.context, args);
   }
 
@@ -245,6 +248,7 @@ framework.extend(MySQL.prototype, new function() {
       appendSql: appendSql
     }, callback];
     
+    // Transfer cache keys to object in first arg
     this.addCacheData(o, args[0]);
     
     this.queryWhere.apply(this, args);
@@ -272,12 +276,10 @@ framework.extend(MySQL.prototype, new function() {
    */
 
   this.insertInto = function(o, callback) {
-    var args, cdata, params, query, 
+    var args, params, query, 
         self = this,
         table = o.table || '',
         values = o.values || {};
-    
-    if (typeof table != 'string') cdata = table, table = table.param;
     
     if (util.isArray(values)) {
       params = framework.util.strRepeat('?, ', values.length).replace(regex.endingComma, '');
@@ -291,10 +293,13 @@ framework.extend(MySQL.prototype, new function() {
       query = query.replace(regex.endingComma, '');
       args = [query, _.values(values)];
     }
+    
     args.push(function(err, info) {
       callback.call(self.app, err, info);
     });
-    if (cdata != null) args.unshift(cdata);
+    
+    this.addCacheData(o, args);
+    
     this.client.query.apply(this.context, args);
   }
 
@@ -320,7 +325,7 @@ framework.extend(MySQL.prototype, new function() {
     */
 
   this.deleteById = function(o, callback) {
-    var args, cdata,
+    var args,
         id = o.id,
         table = o.table || '',
         appendSql = o.appendSql || '';
@@ -333,7 +338,8 @@ framework.extend(MySQL.prototype, new function() {
       appendSql: appendSql
     }, callback]
     
-    if (cdata != null) cdata.param = args[0], args[0] = cdata;
+    // Transfer cache keys to object in first arg
+    this.addCacheData(o, args[0]);
     
     this.deleteWhere.apply(this, args);
   }
@@ -361,15 +367,13 @@ framework.extend(MySQL.prototype, new function() {
    */
 
   this.deleteWhere = function(o, callback) {
-    var args, cdata, 
+    var args, 
         self = this,
         condition = o.condition || '',
         params = o.params || [],
         table = o.table || '',
         appendSql = o.appendSql || '';
         
-    if (typeof condition != 'string') cdata = condition, condition = condition.param;
-    
     if (!util.isArray(params)) params = [params];
     
     args = ["DELETE FROM " + table + " WHERE " + condition + " " + appendSql, params];
@@ -378,7 +382,8 @@ framework.extend(MySQL.prototype, new function() {
       callback.call(self.app, err, info);
     });
     
-    if (cdata != null) args.unshift(cdata);
+    this.addCacheData(o, args);
+    
     this.client.query.apply(this.context, args);
   }
 
@@ -405,7 +410,7 @@ framework.extend(MySQL.prototype, new function() {
    */
 
   this.updateById = function(o, callback) {
-    var args, cdata,
+    var args,
         id = o.id,
         table = o.table || '',
         values = o.values || {},
@@ -420,7 +425,8 @@ framework.extend(MySQL.prototype, new function() {
       appendSql: appendSql
     }, callback]
     
-    if (cdata != null) cdata.param = args[0], args[0] = cdata;
+    // Transfer cache keys to first arg
+    this.addCacheData(o, args[0]);
     
     this.updateWhere.apply(this, args);
   }
@@ -449,15 +455,13 @@ framework.extend(MySQL.prototype, new function() {
    */
 
   this.updateWhere = function(o, callback) {
-    var args, cdata, query, 
+    var args,query, 
         self = this,
         condition = o.condition || '',
         params = o.params || [],
         table = o.table || '',
         values = o.values || {},
         appendSql = o.appendSql || '';
-    
-    if (typeof condition != 'string') cdata = condition, condition = condition.param;
     
     query = "UPDATE " + table + " SET ";
     
@@ -476,7 +480,7 @@ framework.extend(MySQL.prototype, new function() {
       callback.call(self.app, err, info);
     });
     
-    if (cdata != null) args.unshift(cdata);
+    this.addCacheData(o, args);
     
     this.client.query.apply(this.context, args);
   }
@@ -498,19 +502,18 @@ framework.extend(MySQL.prototype, new function() {
    */
 
   this.countRows = function(o, callback) {
-    var args, cdata, 
+    var args, 
         self = this,
         table = o.table || '';
         
-    if (typeof table != 'string') cdata = table, table = table.param;
-    
     args = ["SELECT COUNT('') AS total FROM " + table, []];
+    
     args.push(function(err, results, fields) {
       args = err ? [err, null] : [err, results[0].total];
       callback.apply(self.app, args);
     });
     
-    if (cdata != null) args.unshift(cdata);
+    this.addCacheData(o, args);
     
     this.client.query.apply(this.context, args);
   }
@@ -535,18 +538,16 @@ framework.extend(MySQL.prototype, new function() {
    */
 
   this.idExists = function(o, callback) {
-    var args, cdata, 
+    var args, 
         self = this,
         id = o.id,
         table = o.table || '',
         columns = o.columns || '*',
         appendSql = o.appendSql || '';
     
-    if (! (typeof id == 'number' || util.isArray(id)) ) cdata = id, id = id.param;
-    
     if (typeof id == 'number') id = [id];
     
-    args = [o];
+    args = [o]; // Passing unmodified `o`
     
     args.push(function(err, results, fields) {
       if (err) {
@@ -572,7 +573,7 @@ framework.extend(MySQL.prototype, new function() {
       }
     });
     
-    if (cdata != null) cdata.param = args[0], args[0] = cdata;
+    // No need to transfer cache keys, since `o` is passed unmodified
     
     this.queryById.apply(this, args);
   }
@@ -598,7 +599,7 @@ framework.extend(MySQL.prototype, new function() {
    */
 
   this.recordExists = function(o, callback) {
-    var args, cdata, 
+    var args, 
         self = this,
         condition = o.condition || '',
         params = o.params || [],
@@ -606,11 +607,9 @@ framework.extend(MySQL.prototype, new function() {
         columns = o.columns || '*',
         appendSql = o.appendSql || '';
     
-    if (typeof condition != 'string') cdata = condition, condition = condition.param;
-    
     if (!util.isArray(params)) params = [params];
     
-    args = [o];
+    args = [o]; // Passing unmodified `o`
     
     args.push(function(err, results, fields) {
       if (err) {
@@ -624,7 +623,7 @@ framework.extend(MySQL.prototype, new function() {
       }
     });
     
-    if (cdata != null) cdata.param = args[0], args[0] = cdata;
+    // No need to transfer cache keys, since `o` is passed unmodified
       
     this.queryWhere.apply(this, args);
   }
