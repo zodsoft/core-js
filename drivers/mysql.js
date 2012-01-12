@@ -641,7 +641,8 @@ framework.extend(MySQL.prototype, new function() {
       multi.deleteWhere({
         condition: 'user=?', 
         params: [o.user], 
-        table: this.context});
+        table: this.context
+      });
         
       multi.insertInto({
         table: this.context,
