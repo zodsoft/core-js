@@ -625,16 +625,21 @@ framework.extend(MySQL.prototype, new function() {
     this.queryWhere.apply(this, args);
   }
   
-  /* MODEL API */
+  /* Model API methods */
   
   this.__modelMethods = {
     
-    new: function(o) {
+    new: function(o, callback) {
+      // 1. Validate data
+      this.__validateProperties(o);
+    },
+    
+    get: function(o, callback) {
       
     },
     
-    get: function(o) {
-      console.exit('getting new user');
+    save: function(callback) {
+      
     }
     
   }
