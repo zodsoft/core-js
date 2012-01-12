@@ -636,7 +636,12 @@ framework.extend(MySQL.prototype, new function() {
       // 1. Validate, throw error on failure
       this.__validateProperties(o);
 
-      console.exit('here');
+      this.driver.insertInto({
+        table: this.context,
+        values: o
+      }, function(err, results) {
+        console.exit([err, results]);
+      });
       
     },
     
