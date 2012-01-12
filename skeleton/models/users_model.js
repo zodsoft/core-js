@@ -3,9 +3,9 @@ function UsersModel(app) {
 
   this.properties = {
     id    : {type: 'integer', unique: true},
-    name  : {type: 'string'},
-    email : {type: 'string'},
-    date  : {type: 'timestamp'}
+    name  : {type: 'string', required: true, validates: 'alpha'},
+    email : {type: 'string', required: true, validates: 'alpha'},
+    date  : {type: 'timestamp', validates: 'timestamp'}
   }
 
   this.relationships = {

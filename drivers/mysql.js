@@ -630,7 +630,7 @@ framework.extend(MySQL.prototype, new function() {
   this.__modelMethods = {
     
     new: function(o) {
-      console.exit('creating new user');
+      
     },
     
     get: function(o) {
