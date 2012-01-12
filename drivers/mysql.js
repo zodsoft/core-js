@@ -633,6 +633,8 @@ framework.extend(MySQL.prototype, new function() {
     
     new: function(o, cdata, callback) {
       
+      var self = this;
+      
       // 1. Process callback & cache Data
       if (typeof callback == 'undefined') callback = cdata, cdata = {};
       
@@ -640,23 +642,16 @@ framework.extend(MySQL.prototype, new function() {
       this.__validateProperties(o);
 
       // 3. Save data into the database
-      var multi = this.driver.multi();
-      
-      multi.deleteWhere({
-        condition: 'user=?', 
-        params: [o.user], 
-        table: this.context,
-      });
-        
-      multi.insertInto(_.extend({
+      this.driver.insertInto(_.extend({
         table: this.context,
         values: o
-      }, cdata));
-      
-      // Using __exec since `exec` is present on driver
-      multi.exec(function(err, results) {
-        console.exit([err, results]);
+      }, cdata), function(err, results) {
+        if (err) callback.call(self, err, null);
+        else {
+          console.exit(results);
+        }
       });
+      
       
     },
     
