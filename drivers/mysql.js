@@ -654,7 +654,7 @@ framework.extend(MySQL.prototype, new function() {
       }, cdata));
       
       // Using __exec since `exec` is present on driver
-      multi.__exec(function(err, results) {
+      multi.exec(function(err, results) {
         console.exit([err, results]);
       });
       

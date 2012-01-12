@@ -1,11 +1,6 @@
 
 function Initialize(app) {
 
-  var driver = app.getResource("drivers/mysql"),
-      multi = driver.multi();
-  
-  console.exit(multi.exec.toString());
-
   app.debugMode = true;
 
   app.usersModel.new({
