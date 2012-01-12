@@ -43,13 +43,10 @@ framework.extend(MySQL.prototype, new function() {
       this.storage = app.getResource('storages/' + config.storage);
     }
     
-    // 3. Set calling context (used by caching mechanism)
-    this.context = (this.storage) ? this : this.client;
-    
-    // 4. Set caching function
+    // 3. Set caching function
     if (this.storage != null) this.setCacheFunc(this.client, 'query');
     
-    // 5. Only set important properties enumerable
+    // 4. Only set important properties enumerable
     framework.util.onlySetEnumerable(this, ['className']);
   }
   
@@ -87,7 +84,7 @@ framework.extend(MySQL.prototype, new function() {
     
     this.addCacheData(o, args);
     
-    this.client.query.apply(this.context, args);
+    this.client.query.apply(this.client, args);
   }
 
   /**
@@ -125,7 +122,7 @@ framework.extend(MySQL.prototype, new function() {
     
     this.addCacheData(o, args);
     
-    this.client.query.apply(this.context, args);
+    this.client.query.apply(this.client, args);
   }
 
   /**
@@ -169,7 +166,7 @@ framework.extend(MySQL.prototype, new function() {
     
     this.addCacheData(o, args);
     
-    this.client.query.apply(this.context, args);
+    this.client.query.apply(this.client, args);
   }
 
   /**
@@ -208,7 +205,7 @@ framework.extend(MySQL.prototype, new function() {
     
     this.addCacheData(o, args);
 
-    this.client.query.apply(this.context, args);
+    this.client.query.apply(this.client, args);
   }
 
   /**
@@ -300,7 +297,7 @@ framework.extend(MySQL.prototype, new function() {
     
     this.addCacheData(o, args);
     
-    this.client.query.apply(this.context, args);
+    this.client.query.apply(this.client, args);
   }
 
   /**
@@ -384,7 +381,7 @@ framework.extend(MySQL.prototype, new function() {
     
     this.addCacheData(o, args);
     
-    this.client.query.apply(this.context, args);
+    this.client.query.apply(this.client, args);
   }
 
   /**
@@ -482,7 +479,7 @@ framework.extend(MySQL.prototype, new function() {
     
     this.addCacheData(o, args);
     
-    this.client.query.apply(this.context, args);
+    this.client.query.apply(this.client, args);
   }
 
   /**
@@ -515,7 +512,7 @@ framework.extend(MySQL.prototype, new function() {
     
     this.addCacheData(o, args);
     
-    this.client.query.apply(this.context, args);
+    this.client.query.apply(this.client, args);
   }
 
   /**
