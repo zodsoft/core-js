@@ -631,24 +631,29 @@ framework.extend(MySQL.prototype, new function() {
     
     /** Model API new */
     
-    new: function(o, callback) {
+    new: function(o, cdata, callback) {
       
-      // 1. Validate, throw error on failure
+      // 1. Process callback & cache Data
+      if (typeof callback == 'undefined') callback = cdata, cdata = {};
+      
+      // 2. Validate, throw error on failure
       this.__validateProperties(o);
 
+      // 3. Save data into the database
       var multi = this.driver.multi();
       
       multi.deleteWhere({
         condition: 'user=?', 
         params: [o.user], 
-        table: this.context
+        table: this.context,
       });
         
-      multi.insertInto({
+      multi.insertInto(_.extend({
         table: this.context,
         values: o
-      });
+      }, cdata));
       
+      // Using __exec since `exec` is present on driver
       multi.__exec(function(err, results) {
         console.exit([err, results]);
       });
@@ -657,13 +662,13 @@ framework.extend(MySQL.prototype, new function() {
     
     /** Model API get */
     
-    get: function(o, callback) {
+    get: function(o, cdata, callback) {
       
     },
     
     /** Model API save */
     
-    save: function(callback) {
+    save: function(cdata, callback) {
       
     }
     

@@ -6,6 +6,9 @@ function Initialize(app) {
   app.usersModel.new({
     user: 'ernie', 
     pass: 'abcd1234',
+  }, {
+    cacheID: 'mycache',
+    cacheTimeout: 60 * 1000
   }, function(err, user) {
     console.exit([err, user]);
   });
