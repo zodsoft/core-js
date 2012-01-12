@@ -157,9 +157,10 @@ framework.extend(MySQL.prototype, new function() {
         params = o.params || [],
         table = o.table || '',
         columns = o.columns || '*',
-        appendSql = o.appendSql || '';
+        appendSql = o.appendSql || '',
+        cacheID = o.cacheId,
+        cacheTimeout = o.cacheTimeout;
     
-    if (typeof condition != 'string') cdata = condition, condition = condition.param;
     if (!util.isArray(params)) params = [params];
     
     args = [("SELECT " + columns + " FROM " + table + " WHERE " + condition + " " + appendSql).trim(), params];
