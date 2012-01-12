@@ -167,6 +167,7 @@ framework.extend(MySQL.prototype, new function() {
       callback.call(self.app, err, results, fields);
     });
     if (cdata != null) args.unshift(cdata);
+    
     this.client.query.apply(this.context, args);
   }
 
