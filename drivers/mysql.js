@@ -646,12 +646,8 @@ framework.extend(MySQL.prototype, new function() {
         table: this.context,
         values: o
       }, cdata), function(err, results) {
-        if (err) callback.call(self, err, null);
-        else {
-          console.exit(results);
-        }
+        callback.call(self, err);
       });
-      
       
     },
     
