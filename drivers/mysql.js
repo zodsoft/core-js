@@ -26,8 +26,7 @@ framework.extend(MySQL.prototype, new function() {
   var _ = require('underscore'),
       mysql = require('mysql'),
       util = require('util'),
-      regex = { endingComma: /, ?$/},
-      extract = framework.util.extract;
+      regex = { endingComma: /, ?$/};
 
   // Constructor
   this.__construct = function(app, config) {
@@ -77,17 +76,15 @@ framework.extend(MySQL.prototype, new function() {
   */
 
   this.query = function(o, callback) {
-    var args, cdata,
+    var args,
         sql = o.sql || '',
         params = o.params || [],
         appendSql = o.appendSql || '';
     
-    if (typeof sql != 'string') cdata = sql, sql = sql.param;
-    
     if (!util.isArray(params)) params = [params];
     
     args = [(sql + " " + appendSql).trim(), params, callback];
-    if (cdata != null) args.unshift(cdata);
+    
     this.client.query.apply(this.context, args);
   }
 
@@ -152,7 +149,7 @@ framework.extend(MySQL.prototype, new function() {
    */
 
   this.queryWhere = function(o, callback) {
-    var args, cdata, 
+    var args, 
         self = this,
         condition = o.condition || '',
         params = o.params || [],
@@ -160,17 +157,15 @@ framework.extend(MySQL.prototype, new function() {
         columns = o.columns || '*',
         appendSql = o.appendSql || '';
 
-    cdata = extract(o, this.cacheKeys);
-    
-    console.exit(cdata);
-    
     if (!util.isArray(params)) params = [params];
     
     args = [("SELECT " + columns + " FROM " + table + " WHERE " + condition + " " + appendSql).trim(), params];
+    
     args.push(function(err, results, fields) {
       callback.call(self.app, err, results, fields);
     });
-    if (cdata != null) args.unshift(cdata);
+    
+    this.addCacheData(o, args);
     
     this.client.query.apply(this.context, args);
   }
@@ -235,7 +230,7 @@ framework.extend(MySQL.prototype, new function() {
    */
 
   this.queryById = function(o, callback) {
-    var args, cdata,
+    var args,
         id = o.id,
         table = o.table || '',
         columns = o.columns || '*',
@@ -250,8 +245,8 @@ framework.extend(MySQL.prototype, new function() {
       appendSql: appendSql
     }, callback];
     
-    if (cdata != null) cdata.param = args[0], args[0] = cdata;
-      
+    this.addCacheData(o, args[0]);
+    
     this.queryWhere.apply(this, args);
   }
 
