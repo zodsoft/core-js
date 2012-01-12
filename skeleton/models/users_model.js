@@ -1,6 +1,6 @@
 
 function UsersModel(app) {
-
+  
   this.properties = {
     id    : {type: 'integer', unique: true},
     name  : {type: 'string', required: true, validates: 'alpha'},
