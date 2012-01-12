@@ -26,7 +26,8 @@ framework.extend(MySQL.prototype, new function() {
   var _ = require('underscore'),
       mysql = require('mysql'),
       util = require('util'),
-      regex = { endingComma: /, ?$/};
+      regex = { endingComma: /, ?$/},
+      extract = framework.util.extract;
 
   // Constructor
   this.__construct = function(app, config) {
@@ -157,9 +158,11 @@ framework.extend(MySQL.prototype, new function() {
         params = o.params || [],
         table = o.table || '',
         columns = o.columns || '*',
-        appendSql = o.appendSql || '',
-        cacheID = o.cacheId,
-        cacheTimeout = o.cacheTimeout;
+        appendSql = o.appendSql || '';
+
+    cdata = extract(o, this.cacheKeys);
+    
+    console.exit(cdata);
     
     if (!util.isArray(params)) params = [params];
     
