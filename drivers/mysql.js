@@ -636,10 +636,19 @@ framework.extend(MySQL.prototype, new function() {
       // 1. Validate, throw error on failure
       this.__validateProperties(o);
 
-      this.driver.insertInto({
+      var multi = this.driver.multi();
+      
+      multi.deleteWhere({
+        condition: 'user=?', 
+        params: [o.user], 
+        table: this.context});
+        
+      multi.insertInto({
         table: this.context,
         values: o
-      }, function(err, results) {
+      });
+      
+      multi.__exec(function(err, results) {
         console.exit([err, results]);
       });
       
