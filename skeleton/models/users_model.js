@@ -1,7 +1,7 @@
 
 function UsersModel(app) {
 
-  this.driver = app.drivers.mysql;
+  this.driver = 'mysql';
 
   this.properties = {
     id    : {type: 'integer', unique: true},
