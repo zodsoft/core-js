@@ -632,7 +632,6 @@ framework.extend(MySQL.prototype, new function() {
     /** Model API new */
     
     new: function(o, cdata, callback) {
-      
       var self = this;
       
       // 1. Process callback & cache Data
@@ -646,9 +645,9 @@ framework.extend(MySQL.prototype, new function() {
         table: this.context,
         values: o
       }, cdata), function(err, results) {
+        // 4. Run callback
         callback.call(self, err);
       });
-      
     },
     
     /** Model API get */

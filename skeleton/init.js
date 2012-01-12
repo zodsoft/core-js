@@ -6,8 +6,11 @@ function Initialize(app) {
   app.usersModel.new({
     user: 'ernie', 
     pass: 'abcd1234',
-  }, function(err, user) {
-    console.exit([err, user]);
+  }, function(err) {
+    if (err) app.log(err);
+    else {
+      console.exit('Successfully created user\n');
+    }
   });
 
 }
