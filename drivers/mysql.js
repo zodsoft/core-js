@@ -632,6 +632,9 @@ framework.extend(MySQL.prototype, new function() {
     new: function(o, callback) {
       // 1. Validate data
       this.__validateProperties(o);
+      
+      // 2. Store data in database
+      
     },
     
     get: function(o, callback) {

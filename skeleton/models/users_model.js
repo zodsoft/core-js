@@ -3,8 +3,8 @@ function UsersModel(app) {
   
   this.properties = {
     id    : {type: 'integer', unique: true},
-    name  : {type: 'string', required: true, validates: 'alpha'},
-    email : {type: 'string', required: true, validates: 'email'},
+    user  : {type: 'string', required: true, validates: 'alpha'},
+    pass  : {type: 'string', required: true, validates: 'password'},
     date  : {type: 'timestamp', validates: 'timestamp'}
   }
 
