@@ -624,6 +624,20 @@ framework.extend(MySQL.prototype, new function() {
       
     this.queryWhere.apply(this, args);
   }
+  
+  /* MODEL API */
+  
+  this.__modelMethods = {
+    
+    new: function(o) {
+      console.exit('creating new user');
+    },
+    
+    get: function(o) {
+      console.exit('getting new user');
+    }
+    
+  }
 
 });
 
