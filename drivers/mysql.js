@@ -685,6 +685,7 @@ framework.extend(MySQL.prototype, new function() {
           condition = keys.join('=? AND ') + '=?';
         }
         
+        // Get model data & return generated model (if found)
         this.driver.queryWhere(_.extend({
           condition: condition,
           params: values,
@@ -701,14 +702,32 @@ framework.extend(MySQL.prototype, new function() {
         })
         
       }
-      
-      
     },
     
     /** Model API save */
     
     save: function(o, cdata, callback) {
-      console.exit(o);
+      var id, self = this;
+      
+      // 1. Process callback & cache data
+      if (typeof callback == 'undefined') callback = cdata, cdata = {};
+      
+      // 2. Update data (validation has already been performed by ModelObject)
+      id = o.id, delete o.id;
+      this.driver.updateById(_.extend({
+        id: id,
+        table: this.context,
+        values: o
+      }, cdata), function(err, results) {
+        callback.call(self, err);
+      });
+      
+    },
+    
+    /** Model API delete */
+    
+    delete: function(id, cdata, callback) {
+      
     }
     
   }

@@ -13,23 +13,18 @@ function Initialize(app) {
   //   }
   // });
   
-  app.usersModel.get({
-    user: 'ernie',
-  }, function(err, model) {
+  app.usersModel.get({id: 55}, function(err, model) {
     if (err) app.log(err);
     else {
-      
-      model.user = 'howdy';
-      // model.pass = 'secret'
-      
+      var rand = '_' + Math.random().toString().slice(15);
+      model.user = 'howdy' + rand;
+      model.pass = 'secret'
       model.save(function(err) {
         if (err) app.log(err);
-        else {
-          console.log('Successfully saved object');
-        }
-      })
+        else console.exit('Successfully saved ' + model.className);
+      });
     }
-  })
+  });
 
 }
 
