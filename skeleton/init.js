@@ -3,7 +3,7 @@ function Initialize(app) {
 
   app.debugMode = true;
 
-  app.usersModel.get({id: 55}, {
+  app.usersModel.get(55, {
     cacheId: 'mycache',
     cacheTimeout: 3600
   }, function(err, model) {

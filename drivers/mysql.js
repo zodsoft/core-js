@@ -660,50 +660,49 @@ framework.extend(MySQL.prototype, new function() {
       // 1. Process callback & cache data
       if (typeof callback == 'undefined') callback = cdata, cdata = {};
       
-      // 2a. If `o` is number
       if (typeof o == 'number') { 
-        
+        // 2a. If `o` is number: Convert to object
+        o = {id: o};
+      } else if (util.isArray(o)) {
+        // 2.b If `o` is an array of ID's: Get multiple models
         console.exit(o);
-      
-      // 2b. If `o` is object
-      } else { 
-        
-        // Validate without checking required files
+      } else {
+        // 2.c IF `o` is object: Validate without checking required fields
         this.__propertyCheck(o);
-        
-        // Prepare custom query
-        var condition, key, value,
-            keys = [], values = [];
-        
-        for (key in o) {
-          keys.push(key), values.push(o[key]);
-        }
-        
-        // Prevent empty args
-        if (keys.length == 0) {
-          callback.call(self, new Error(util.format("%s: Empty arguments", this.className)));
-          return;
-        } else {
-          condition = keys.join('=? AND ') + '=?';
-        }
-        
-        // Get model data & return generated model (if found)
-        this.driver.queryWhere(_.extend({
-          condition: condition,
-          params: values,
-          table: this.context,
-        }, cdata), function(err, results) {
-          if (err) callback.call(self, err, null);
-          else {
-            if (results.length == 0) callback.call(self, null, null);
-            else {
-              var model = self.__createModel(results[0]);
-              callback.call(self, null, model);
-            }
-          }
-        })
-        
       }
+        
+      // Prepare custom query
+      var condition, key, value,
+          keys = [], values = [];
+      
+      for (key in o) {
+        keys.push(key), values.push(o[key]);
+      }
+      
+      // Prevent empty args
+      if (keys.length == 0) {
+        callback.call(self, new Error(util.format("%s: Empty arguments", this.className)));
+        return;
+      } else {
+        condition = keys.join('=? AND ') + '=?';
+      }
+      
+      // Get model data & return generated model (if found)
+      this.driver.queryWhere(_.extend({
+        condition: condition,
+        params: values,
+        table: this.context,
+      }, cdata), function(err, results) {
+        if (err) callback.call(self, err, null);
+        else {
+          if (results.length == 0) callback.call(self, null, null);
+          else {
+            var model = self.__createModel(results[0]);
+            callback.call(self, null, model);
+          }
+        }
+      });
+        
     },
     
     /** Model API save */
