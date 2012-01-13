@@ -18,7 +18,9 @@ function Initialize(app) {
   }, function(err, model) {
     if (err) app.log(err);
     else {
-      console.exit(model);
+      
+      console.exit(model.constructor);
+      
     }
   })
 

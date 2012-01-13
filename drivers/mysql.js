@@ -692,8 +692,11 @@ framework.extend(MySQL.prototype, new function() {
         }, cdata), function(err, results) {
           if (err) callback.call(self, err, null);
           else {
-            var models = self.__createModels(results);
-            callback.call(self, null, models);
+            if (results.length == 0) callback.call(self, null, null);
+            else {
+              var model = self.__createModel(results[0]);
+              callback.call(self, null, model);
+            }
           }
         })
         
