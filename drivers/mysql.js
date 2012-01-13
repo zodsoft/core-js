@@ -742,15 +742,41 @@ framework.extend(MySQL.prototype, new function() {
       
       // Process callback & cache data
       if (typeof callback == 'undefined') callback = cdata, cdata = {};
-      
-      // Remove entry from database
-      this.driver.deleteById(_.extend({
-        id: id,
-        table: this.context,
-        appendSql: 'LIMIT 1'
-      }, cdata), function(err, results) {
-        callback.call(self, err);
-      });
+
+      if (typeof id == 'number') {
+        
+        // Remove entry from database
+        this.driver.deleteById(_.extend({
+          id: id,
+          table: this.context,
+          appendSql: 'LIMIT 1'
+        }, cdata), function(err, results) {
+          callback.call(self, err);
+        });
+        
+      } else if (util.isArray(id)) {
+        
+        // Remove multiple entries
+        var i, arr = id,
+            multi = this.multi();
+        
+        for (i=0; i < arr.length; i++) {
+          id = arr[i];
+          multi.delete(id);
+        }
+        
+        multi.exec(function(err, results) {
+          callback.call(self, err, results);
+        })
+        
+        return;
+        
+      } else {
+        
+        callback.call(self, new Error(util.format("%s: Wrong value for id parameter", this.className)));
+        
+      }
+
     }
     
   }
