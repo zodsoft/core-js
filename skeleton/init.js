@@ -3,7 +3,7 @@ function Initialize(app) {
 
   app.debugMode = true;
   
-  var multi = app.createMulti(app.usersModel);
+  var multi = app.usersModel.multi();
 
   console.exit(multi);
 
