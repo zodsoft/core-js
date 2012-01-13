@@ -666,8 +666,18 @@ framework.extend(MySQL.prototype, new function() {
         // If `o` is number: Convert to object
         o = {id: o};
       } else if (util.isArray(o)) {
-        // If `o` is an array of ID's: Get multiple models
-        console.exit(o);
+        
+        // If `o` is an array of params, process args recursively using multi
+        var arr = o, 
+            multi = this.multi();
+        for (var i=0; i < arr.length; i++) {
+          multi.get(arr[i], cdata);
+        }
+        multi.exec(function(err, results) {
+          callback.call(self, err, results);
+        });
+        return;
+        
       } else {
         // IF `o` is object: Validate without checking required fields
         this.__propertyCheck(o);
