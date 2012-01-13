@@ -707,8 +707,8 @@ framework.extend(MySQL.prototype, new function() {
     
     /** Model API save */
     
-    save: function(cdata, callback) {
-      
+    save: function(o, cdata, callback) {
+      console.exit(o);
     }
     
   }
