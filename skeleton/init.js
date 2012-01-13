@@ -19,8 +19,15 @@ function Initialize(app) {
     if (err) app.log(err);
     else {
       
-      console.exit(model.constructor);
+      model.user = 'howdy';
+      // model.pass = 'secret'
       
+      model.save(function(err) {
+        if (err) app.log(err);
+        else {
+          console.log('Successfully saved object');
+        }
+      })
     }
   })
 
