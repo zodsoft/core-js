@@ -653,6 +653,44 @@ framework.extend(MySQL.prototype, new function() {
     /** Model API get */
     
     get: function(o, cdata, callback) {
+      var self = this;
+      
+      // 1. Process callback & cache data
+      if (typeof callback == 'undefined') callback = cdata, cdata = {};
+      
+      // 2a. If `o` is number
+      if (typeof o == 'number') { 
+        
+        console.exit(o);
+      
+      // 2b. If `o` is object
+      } else { 
+        
+        // Validate without checking required files
+        this.__propertyCheck(o);
+        
+        // Prepare custom query
+        var condition, key, value,
+            keys = [], values = [];
+        
+        for (key in o) {
+          keys.push(key), values.push(o[key]);
+        }
+        
+        // Prevent empty args
+        if (keys.length == 0) {
+          callback.call(self, new Error(util.format("%s: Empty arguments", this.className)));
+          return;
+        } else if (keys.length == 1) {
+          condition = keys[0] + '=?';
+        } else {
+          condition = keys.join('=?, ');
+        }
+        
+        console.exit(condition);
+        
+      }
+      
       
     },
     
