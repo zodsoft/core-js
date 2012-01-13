@@ -678,9 +678,16 @@ framework.extend(MySQL.prototype, new function() {
         });
         return;
         
-      } else {
+      } else if (typeof o == 'object') {
+        
         // IF `o` is object: Validate without checking required fields
         this.__propertyCheck(o);
+        
+      } else {
+        
+        callback.call(self, new Error(util.format("%s: Wrong value for `o` argument", this.className)), null);
+        return;
+        
       }
         
       // Prepare custom query
@@ -795,7 +802,7 @@ framework.extend(MySQL.prototype, new function() {
         
       } else {
         
-        callback.call(self, new Error(util.format("%s: Wrong value for id parameter", this.className)));
+        callback.call(self, new Error(util.format("%s: Wrong value for `id` parameter", this.className)));
         
       }
 

@@ -19,10 +19,10 @@ function Initialize(app) {
   //   console.exit([err, results]);
   // });
 
-  app.usersModel.getAll(function(err, models) {
-    console.exit([err, models]);
-  });
-
+  // app.usersModel.getAll(function(err, models) {
+  //   console.exit([err, models]);
+  // });
+  
 }
 
 module.exports = Initialize;
