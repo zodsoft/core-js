@@ -631,24 +631,26 @@ framework.extend(MySQL.prototype, new function() {
   
   this.__modelMethods = {
     
-    /** Model API new */
+    /** Model API insert */
     
-    new: function(o, cdata, callback) {
+    insert: function(o, cdata, callback) {
       var self = this;
       
-      // 1. Process callback & cache Data
+      // Process callback & cache Data
       if (typeof callback == 'undefined') callback = cdata, cdata = {};
       
-      // 2. Validate, throw error on failure
+      // Validate, throw error on failure
       this.__validateProperties(o);
 
-      // 3. Save data into the database
+      // Save data into the database
       this.driver.insertInto(_.extend({
         table: this.context,
         values: o
       }, cdata), function(err, results) {
-        // 4. Run callback
-        callback.call(self, err);
+        if (err) callback.call(self, err, null);
+        else {
+          callback.call(self, null, results.insertId);
+        }
       });
     },
     
@@ -657,17 +659,17 @@ framework.extend(MySQL.prototype, new function() {
     get: function(o, cdata, callback) {
       var self = this;
       
-      // 1. Process callback & cache data
+      // Process callback & cache data
       if (typeof callback == 'undefined') callback = cdata, cdata = {};
       
       if (typeof o == 'number') { 
-        // 2a. If `o` is number: Convert to object
+        // If `o` is number: Convert to object
         o = {id: o};
       } else if (util.isArray(o)) {
-        // 2.b If `o` is an array of ID's: Get multiple models
+        // If `o` is an array of ID's: Get multiple models
         console.exit(o);
       } else {
-        // 2.c IF `o` is object: Validate without checking required fields
+        // IF `o` is object: Validate without checking required fields
         this.__propertyCheck(o);
       }
         
@@ -702,7 +704,6 @@ framework.extend(MySQL.prototype, new function() {
           }
         }
       });
-        
     },
     
     /** Model API save */
@@ -710,10 +711,10 @@ framework.extend(MySQL.prototype, new function() {
     save: function(o, cdata, callback) {
       var id, self = this;
       
-      // 1. Process callback & cache data
+      // Process callback & cache data
       if (typeof callback == 'undefined') callback = cdata, cdata = {};
       
-      // 2. Update data (validation has already been performed by ModelObject)
+      // Update data. Validation has already been performed by ModelObject
       id = o.id, delete o.id;
       this.driver.updateById(_.extend({
         id: id,
@@ -722,13 +723,24 @@ framework.extend(MySQL.prototype, new function() {
       }, cdata), function(err, results) {
         callback.call(self, err);
       });
-      
     },
     
     /** Model API delete */
     
     delete: function(id, cdata, callback) {
+      var self = this;
       
+      // Process callback & cache data
+      if (typeof callback == 'undefined') callback = cdata, cdata = {};
+      
+      // Remove entry from database
+      this.driver.deleteById(_.extend({
+        id: id,
+        table: this.context,
+        appendSql: 'LIMIT 1'
+      }, cdata), function(err, results) {
+        callback.call(self, err);
+      });
     }
     
   }
