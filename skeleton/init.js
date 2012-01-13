@@ -15,8 +15,6 @@ function Initialize(app) {
   
   app.usersModel.get({
     user: 'ernie',
-    pass: 'hello',
-    howdy: 'there'
   }, function(err, model) {
     if (err) app.log(err);
     else {

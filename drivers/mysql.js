@@ -681,13 +681,21 @@ framework.extend(MySQL.prototype, new function() {
         if (keys.length == 0) {
           callback.call(self, new Error(util.format("%s: Empty arguments", this.className)));
           return;
-        } else if (keys.length == 1) {
-          condition = keys[0] + '=?';
         } else {
-          condition = keys.join('=?, ');
+          condition = keys.join('=? AND ') + '=?';
         }
         
-        console.exit(condition);
+        this.driver.queryWhere(_.extend({
+          condition: condition,
+          params: values,
+          table: this.context,
+        }, cdata), function(err, results) {
+          if (err) callback.call(self, err, null);
+          else {
+            var models = self.__createModels(results);
+            callback.call(self, null, models);
+          }
+        })
         
       }
       
