@@ -166,6 +166,8 @@ framework.extend(MySQL.prototype, new function() {
     
     this.addCacheData(o, args);
     
+    // console.exit(args);
+    
     this.client.query.apply(this.client, args);
   }
 
