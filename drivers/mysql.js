@@ -716,6 +716,28 @@ framework.extend(MySQL.prototype, new function() {
       });
     },
     
+    /** Model API getAll */
+    
+    getAll: function(cdata, callback) {
+      var self = this, models = [];
+
+      // Process callback & cache data
+      if (typeof callback == 'undefined') callback = cdata, cdata = {};
+
+      this.driver.queryAll(_.extend({
+        table: this.context
+      }, cdata), function(err, results) {
+        if (err) callback.call(self, err, null);
+        else {
+          for (var i=0; i < results.length; i++) {
+            models.push(self.__createModel(results[i]));
+          }
+          callback.call(self, null, models);
+        }
+      });
+
+    },
+    
     /** Model API save */
     
     save: function(o, cdata, callback) {

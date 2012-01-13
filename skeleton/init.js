@@ -15,8 +15,12 @@ function Initialize(app) {
   //   console.exit([err, models]);
   // });
   
-  app.usersModel.delete([85, 86, 87], function(err, results) {
-    console.exit([err, results]);
+  // app.usersModel.delete([85, 86, 87], function(err, results) {
+  //   console.exit([err, results]);
+  // });
+
+  app.usersModel.getAll(function(err, models) {
+    console.exit([err, models]);
   });
 
 }
