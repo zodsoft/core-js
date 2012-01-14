@@ -21,10 +21,11 @@
   
   // Relaxing
   
+  "asi": true,
   "eqnull": true,
   "es5": true,
   "funcscope": true,
-  "lastsemic": true,
+  "lastsemic": false,
   "multistr": true,
   "supernew": true,
   
@@ -35,9 +36,6 @@
   
   // Legacy
   
-  "nomen": true,
-  "onevar": true,
-  "white": true,
   "passfail": false
   
 }
