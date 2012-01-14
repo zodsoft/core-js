@@ -1,10 +1,7 @@
 #!/usr/bin/env node
 
-/**
-    remove-sys-notice.js
-    
-    Patches node_modules and replaces any references of the 'sys' module
-    with the new 'util' module.
+/*
+ * Patches ../node_modules and ensures 'util' is used instead of 'sys'
  */
 
 // Local vars

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /*
-  Stops the node inspector
+ * Stops the node inspector
  */
  
 var path = require('path'),
