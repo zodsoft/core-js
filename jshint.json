@@ -2,6 +2,8 @@
   
   // jshint.com/options/
   
+  "predef": ["framework", "app"],
+  
   // Enforcing
   
   "bitwise": true,
@@ -17,7 +19,7 @@
   "plusplus": false,
   "regexp": true,
   "undef": true,
-  "trailing": true,
+  "trailing": false,
   
   // Relaxing
   
@@ -28,6 +30,9 @@
   "lastsemic": false,
   "multistr": true,
   "supernew": true,
+  "regexdash": false,
+  "laxbreak": true,
+  "expr": true,
   
   // Environments
   
