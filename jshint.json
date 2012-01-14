@@ -1,3 +1,43 @@
 {
-  "curly" : true
+  
+  // http://www.jshint.com/options/
+  
+  // Enforcing
+  
+  "bitwise": true,
+  "curly": false,
+  "eqeqeq": false,
+  "forin": false,
+  "immed": true,
+  "latedef": false,
+  "newcap": true,
+  "noarg": true,
+  "noempty": true,
+  "nonew": false,
+  "plusplus": false,
+  "regexp": true,
+  "undef": true,
+  "trailing": true,
+  
+  // Relaxing
+  
+  "eqnull": true,
+  "es5": true,
+  "funcscope": true,
+  "lastsemic": true,
+  "multistr": true,
+  "supernew": true,
+  
+  // Environments
+  
+  "devel": true,
+  "node": true,
+  
+  // Legacy
+  
+  "nomen": true,
+  "onevar": true,
+  "white": true,
+  "passfail": false
+  
 }
