@@ -27,7 +27,7 @@ function logger(data) {
 }
 
 function colorize(data) {
-  return data.replace(colorRegex, '$1➜ \033[0;30m$2:\033[0m\033[1;30m$3 \033[0;31m$5\033[0m$6');
+  return data.replace(colorRegex, '$1➜ \u001b[0;30m$2:\u001b[0m\u001b[1;30m$3 \u001b[0;31m$5\u001b[0m$6');
 }
 
 // Run command w/args
