@@ -1,9 +1,14 @@
 
 /* MySQL */
 
+var _ = require('underscore'),
+    mysql = require('mysql'),
+    util = require('util'),
+    regex = { endingComma: /, ?$/};
+
 function MySQL(app, config) {
   
-  /** {
+  /** config: {
     host: 'localhost',
     port: 3306,
     user: 'db_user',
@@ -13,803 +18,789 @@ function MySQL(app, config) {
     storage: 'redis'
   } */
   
-  this.constructor.prototype.__construct.call(this, app, config);
+  config = config || {};
+  this.className = this.constructor.name;
+  this.app = app;
+  this.config = config;
+  
+  // 1. Set client
+  this.client = mysql.createClient(config);
+  
+  // 2. Assign storage
+  if (typeof config.storage == 'string') {
+    this.storage = app.getResource('storages/' + config.storage);
+  }
+  
+  // 3. Set caching function
+  if (this.storage != null) this.setCacheFunc(this.client, 'query');
+  
+  // 4. Only set important properties enumerable
+  framework.util.onlySetEnumerable(this, ['className']);
   
 }
 
-/* MySQL::prototype */
+util.inherits(MySQL, framework.lib.driver);
 
-framework.extend(MySQL.prototype, framework.driverProto);
+/**
+  Performs a manual SQL Query
 
-framework.extend(MySQL.prototype, new function() {
+  Provides [err, results, fields]
+
+  Cache: Store / {cacheId, timeout, param}
   
-  var _ = require('underscore'),
-      mysql = require('mysql'),
-      util = require('util'),
-      regex = { endingComma: /, ?$/};
-
-  // Constructor
-  this.__construct = function(app, config) {
-    config = config || {};
-    this.className = this.constructor.name;
-    this.app = app;
-    this.config = config;
-    
-    // 1. Set client
-    this.client = mysql.createClient(config);
-    
-    // 2. Assign storage
-    if (typeof config.storage == 'string') {
-      this.storage = app.getResource('storages/' + config.storage);
-    }
-    
-    // 3. Set caching function
-    if (this.storage != null) this.setCacheFunc(this.client, 'query');
-    
-    // 4. Only set important properties enumerable
-    framework.util.onlySetEnumerable(this, ['className']);
-  }
+  @example
   
-  /**
-    Performs a manual SQL Query
+    db.query({
+      sql: 'SELECT * FROM table WHERE id=? AND user=?',
+      params: [id, user],
+      appendSql: ''
+    }, function(err, results, fields) {
+      callback.call(err, results, fields);
+    })
+
+  @param {object} o
+  @param {function} callback
+  @public
+*/
+
+MySQL.prototype.query = function(o, callback) {
+  var args,
+      sql = o.sql || '',
+      params = o.params || [],
+      appendSql = o.appendSql || '';
   
-    Provides [err, results, fields]
-
-    Cache: Store / {cacheId, timeout, param}
-    
-    @example
-    
-      db.query({
-        sql: 'SELECT * FROM table WHERE id=? AND user=?',
-        params: [id, user],
-        appendSql: ''
-      }, function(err, results, fields) {
-        callback.call(err, results, fields);
-      })
+  if (!util.isArray(params)) params = [params];
   
-    @param {object} o
-    @param {function} callback
-    @public
-  */
-
-  this.query = function(o, callback) {
-    var args,
-        sql = o.sql || '',
-        params = o.params || [],
-        appendSql = o.appendSql || '';
-    
-    if (!util.isArray(params)) params = [params];
-    
-    args = [(sql + " " + appendSql).trim(), params, callback];
-    
-    this.addCacheData(o, args);
-    
-    this.client.query.apply(this.client, args);
-  }
-
-  /**
-    Performs a query that returns no results. Usually affecting tables/rows
+  args = [(sql + " " + appendSql).trim(), params, callback];
   
-    Provides: [err, info]
-
-    Cache: Invalidate / {invalidate, param}
-    
-    @example
-
-      db.exec({
-        sql: 'SHOW TABLES',
-      }, function(err, info) {
-        console.exit([err, info]);
-      });
+  this.addCacheData(o, args);
   
-    @param {object} o
-    @param {function} callback
-    @public
-  */
+  this.client.query.apply(this.client, args);
+}
 
-  this.exec = function(o, callback) {
-    var args, 
-        self = this,
-        sql = o.sql || '',
-        params = o.params || [];
-    
-    if (!util.isArray(params)) params = [params];
-    
-    args = [sql, params];
-    args.push(function(err, info) {
-      callback.call(self.app, err, info);
+/**
+  Performs a query that returns no results. Usually affecting tables/rows
+
+  Provides: [err, info]
+
+  Cache: Invalidate / {invalidate, param}
+  
+  @example
+
+    db.exec({
+      sql: 'SHOW TABLES',
+    }, function(err, info) {
+      console.exit([err, info]);
     });
-    
-    this.addCacheData(o, args);
-    
-    this.client.query.apply(this.client, args);
-  }
 
-  /**
-    Performs a SELECT ... WHERE ... query
+  @param {object} o
+  @param {function} callback
+  @public
+*/
+
+MySQL.prototype.exec = function(o, callback) {
+  var args, 
+      self = this,
+      sql = o.sql || '',
+      params = o.params || [];
   
-    Provides: [err, results, fields]
-
-    Cache: Store / {cacheId, timeout, param}
-
-    @example
-
-      db.queryWhere({
-        condition: 'id=?',
-        params: [1],
-        table: 'users'
-      }, function(err, results, fields) {
-        console.exit([err, results, fields]);
-      });
+  if (!util.isArray(params)) params = [params];
   
-    @param {object} o
-    @param {function} callback
-    @public
-   */
+  args = [sql, params];
+  args.push(function(err, info) {
+    callback.call(self.app, err, info);
+  });
+  
+  this.addCacheData(o, args);
+  
+  this.client.query.apply(this.client, args);
+}
 
-  this.queryWhere = function(o, callback) {
-    var args, 
-        self = this,
-        condition = o.condition || '',
-        params = o.params || [],
-        table = o.table || '',
-        columns = o.columns || '*',
-        appendSql = o.appendSql || '';
+/**
+  Performs a SELECT ... WHERE ... query
 
-    if (!util.isArray(params)) params = [params];
-    
-    args = [("SELECT " + columns + " FROM " + table + " WHERE " + condition + " " + appendSql).trim(), params];
-    
-    args.push(function(err, results, fields) {
-      callback.call(self.app, err, results, fields);
+  Provides: [err, results, fields]
+
+  Cache: Store / {cacheId, timeout, param}
+
+  @example
+
+    db.queryWhere({
+      condition: 'id=?',
+      params: [1],
+      table: 'users'
+    }, function(err, results, fields) {
+      console.exit([err, results, fields]);
     });
-    
-    this.addCacheData(o, args);
-    
-    // console.exit(args);
-    
-    this.client.query.apply(this.client, args);
-  }
 
-  /**
-    Queries all entries from a table. Optionally fetches specific columns
+  @param {object} o
+  @param {function} callback
+  @public
+ */
+
+MySQL.prototype.queryWhere = function(o, callback) {
+  var args, 
+      self = this,
+      condition = o.condition || '',
+      params = o.params || [],
+      table = o.table || '',
+      columns = o.columns || '*',
+      appendSql = o.appendSql || '';
+
+  if (!util.isArray(params)) params = [params];
   
-    Provides: [err, results, fields]
-
-    Cache: Store / {cacheId, timeout, param}
-
-    @example
-
-      db.queryAll({
-        columns: 'user, pass',
-        table: 'users'
-      }, function(err, results, fields) {
-        console.exit([err, results, fields]);
-      });
+  args = [("SELECT " + columns + " FROM " + table + " WHERE " + condition + " " + appendSql).trim(), params];
   
-    @param {object} o
-    @param {function} callback
-    @public
-   */
+  args.push(function(err, results, fields) {
+    callback.call(self.app, err, results, fields);
+  });
+  
+  this.addCacheData(o, args);
+  
+  // console.exit(args);
+  
+  this.client.query.apply(this.client, args);
+}
 
-  this.queryAll = function(o, callback) {
-    var args, cdata, 
-        self = this,
-        columns = o.columns || '*',
-        table = o.table || '',
-        appendSql = o.appendSql || '';
-    
-    args = [("SELECT " + columns + " FROM " + table + " " + appendSql).trim()];
-    
-    args.push(function(err, results, columns) {
-      callback.call(self.app, err, results, columns);
+/**
+  Queries all entries from a table. Optionally fetches specific columns
+
+  Provides: [err, results, fields]
+
+  Cache: Store / {cacheId, timeout, param}
+
+  @example
+
+    db.queryAll({
+      columns: 'user, pass',
+      table: 'users'
+    }, function(err, results, fields) {
+      console.exit([err, results, fields]);
     });
-    
-    this.addCacheData(o, args);
 
-    this.client.query.apply(this.client, args);
-  }
+  @param {object} o
+  @param {function} callback
+  @public
+ */
 
-  /**
-    Queries fields by ID
+MySQL.prototype.queryAll = function(o, callback) {
+  var args, cdata, 
+      self = this,
+      columns = o.columns || '*',
+      table = o.table || '',
+      appendSql = o.appendSql || '';
   
-    Provides: [err, results, fields]
-
-    Cache: Store / {cacheId, timeout, param}
-    
-    @example
-
-      db.queryById({
-        id: [1,3],
-        table: 'users'
-      }, function(err, results, fields) {
-        console.exit([err, results, fields]);
-      });
-    
-    @param {object} o
-    @param {function} callback
-    @public
-   */
-
-  this.queryById = function(o, callback) {
-    var args,
-        id = o.id,
-        table = o.table || '',
-        columns = o.columns || '*',
-        appendSql = o.appendSql || '';
-    
-    if (typeof id == 'number') id = [id];
-    
-    args = [{
-      condition: "id IN (" + (id.toString()) + ")",
-      table: table,
-      columns: columns,
-      appendSql: appendSql
-    }, callback];
-    
-    // Transfer cache keys to object in first arg
-    this.addCacheData(o, args[0]);
-    
-    this.queryWhere.apply(this, args);
-  }
-
-  /**
-    Inserts values into a table
+  args = [("SELECT " + columns + " FROM " + table + " " + appendSql).trim()];
   
-    Provides:  [err, info]
-
-    Cache: Invalidate / {invalidate, param}
-    
-    @example
-
-      db.insertInto({
-        table: 'users',
-        values: {user: 'hello', pass: 'passme'}
-      }, function(err, info) {
-        console.exit([err, info]);
-      });
+  args.push(function(err, results, columns) {
+    callback.call(self.app, err, results, columns);
+  });
   
-    @param {object} o
-    @param {function} callback
-    @public
-   */
+  this.addCacheData(o, args);
 
-  this.insertInto = function(o, callback) {
-    var args, params, query, 
-        self = this,
-        table = o.table || '',
-        values = o.values || {};
-    
-    if (util.isArray(values)) {
-      params = framework.util.strRepeat('?, ', values.length).replace(regex.endingComma, '');
-      args = ["INSERT INTO " + table + " VALUES(" + params + ")", values];
-    } else {
-      query = "INSERT INTO " + table + " SET ";
-      if (values.id == undefined) values.id = null;
-      for (var key in values) {
-        query += key + "=?, ";
-      }
-      query = query.replace(regex.endingComma, '');
-      args = [query, _.values(values)];
-    }
-    
-    args.push(function(err, info) {
-      callback.call(self.app, err, info);
+  this.client.query.apply(this.client, args);
+}
+
+/**
+  Queries fields by ID
+
+  Provides: [err, results, fields]
+
+  Cache: Store / {cacheId, timeout, param}
+  
+  @example
+
+    db.queryById({
+      id: [1,3],
+      table: 'users'
+    }, function(err, results, fields) {
+      console.exit([err, results, fields]);
     });
-    
-    this.addCacheData(o, args);
-    
-    this.client.query.apply(this.client, args);
-  }
-
-  /**
-    Deletes records by ID
   
-    Provides: [err, info]
+  @param {object} o
+  @param {function} callback
+  @public
+ */
 
-    Cache: Invalidate / {invalidate, param}
-    
-    @example
-
-      db.deleteById({
-        id: 4,
-        table: 'users'
-      }, function(err, info) {
-        console.exit([err, info]);
-      });
+MySQL.prototype.queryById = function(o, callback) {
+  var args,
+      id = o.id,
+      table = o.table || '',
+      columns = o.columns || '*',
+      appendSql = o.appendSql || '';
   
-    @param {object} o
-    @param {function} callback
-    @public
-    */
-
-  this.deleteById = function(o, callback) {
-    var args,
-        id = o.id,
-        table = o.table || '',
-        appendSql = o.appendSql || '';
-    
-    if (typeof id == 'number') id = [id];
-    
-    args = [{
-      condition: "id IN (" + (id.toString()) + ")",
-      table: table,
-      appendSql: appendSql
-    }, callback]
-    
-    // Transfer cache keys to object in first arg
-    this.addCacheData(o, args[0]);
-    
-    this.deleteWhere.apply(this, args);
-  }
-
-  /**
-    Performs a DELETE ... WHERE ... query
-    
-    Provides: [err, info]
-
-    Cache: Invalidate / {invalidate, param}
-    
-    @example
-
-      db.deleteWhere({
-        condition: 'id=?',
-        params: [5],
-        table: 'users'
-      }, function(err, info) {
-        console.exit([err, info]);
-      });
+  if (typeof id == 'number') id = [id];
   
-    @param {object} o
-    @param {function} callback
-    @public
-   */
+  args = [{
+    condition: "id IN (" + (id.toString()) + ")",
+    table: table,
+    columns: columns,
+    appendSql: appendSql
+  }, callback];
+  
+  // Transfer cache keys to object in first arg
+  this.addCacheData(o, args[0]);
+  
+  this.queryWhere.apply(this, args);
+}
 
-  this.deleteWhere = function(o, callback) {
-    var args, 
-        self = this,
-        condition = o.condition || '',
-        params = o.params || [],
-        table = o.table || '',
-        appendSql = o.appendSql || '';
-        
-    if (!util.isArray(params)) params = [params];
-    
-    args = ["DELETE FROM " + table + " WHERE " + condition + " " + appendSql, params];
-    
-    args.push(function(err, info) {
-      callback.call(self.app, err, info);
+/**
+  Inserts values into a table
+
+  Provides:  [err, info]
+
+  Cache: Invalidate / {invalidate, param}
+  
+  @example
+
+    db.insertInto({
+      table: 'users',
+      values: {user: 'hello', pass: 'passme'}
+    }, function(err, info) {
+      console.exit([err, info]);
     });
-    
-    this.addCacheData(o, args);
-    
-    this.client.query.apply(this.client, args);
-  }
 
-  /**
-    Updates records by ID
+  @param {object} o
+  @param {function} callback
+  @public
+ */
+
+MySQL.prototype.insertInto = function(o, callback) {
+  var args, params, query, 
+      self = this,
+      table = o.table || '',
+      values = o.values || {};
   
-    Provides: [err, info]
-
-    Cache: Invalidate / {invalidate, param}
-    
-    @example
-
-      db.updateById({
-        id: 1,
-        table: 'users',
-        values: {user: 'ernie'}
-      }, function(err, info) {
-        console.exit([err, info]);
-      });
-  
-    @param {object} o
-    @param {function} callback
-    @public
-   */
-
-  this.updateById = function(o, callback) {
-    var args,
-        id = o.id,
-        table = o.table || '',
-        values = o.values || {},
-        appendSql = o.appendSql || '';
-    
-    if (typeof id == 'number') id = [id];
-    
-    args = [{
-      condition: "id IN (" + (id.toString()) + ")",
-      table: table,
-      values: values,
-      appendSql: appendSql
-    }, callback]
-    
-    // Transfer cache keys to first arg
-    this.addCacheData(o, args[0]);
-    
-    this.updateWhere.apply(this, args);
-  }
-
-  /**
-    Performs an UPDATE ... WHERE ... query
-    
-    Provides: [err, info]
-
-    Cache: Invalidate / {invalidate, param}
-    
-    @example
-
-      db.updateWhere({
-        condition: 'id=?',
-        params: [1],
-        table: 'users',
-        values: {user: 'ernie'}
-      }, function(err, info) {
-        console.exit([err, info]);
-      });
-    
-    @param {object} o
-    @param {function} callback
-    @public
-   */
-
-  this.updateWhere = function(o, callback) {
-    var args,query, 
-        self = this,
-        condition = o.condition || '',
-        params = o.params || [],
-        table = o.table || '',
-        values = o.values || {},
-        appendSql = o.appendSql || '';
-    
-    query = "UPDATE " + table + " SET ";
-    
-    if (!util.isArray(params)) params = [params];
-    
+  if (util.isArray(values)) {
+    params = framework.util.strRepeat('?, ', values.length).replace(regex.endingComma, '');
+    args = ["INSERT INTO " + table + " VALUES(" + params + ")", values];
+  } else {
+    query = "INSERT INTO " + table + " SET ";
+    if (values.id == null) values.id = null;
     for (var key in values) {
       query += key + "=?, ";
     }
-    
     query = query.replace(regex.endingComma, '');
-    query += " WHERE " + condition + " " + appendSql;
-    
-    args = [query, _.values(values).concat(params)];
-    
-    args.push(function(err, info) {
-      callback.call(self.app, err, info);
-    });
-    
-    this.addCacheData(o, args);
-    
-    this.client.query.apply(this.client, args);
+    args = [query, _.values(values)];
   }
-
-  /**
-    Counts rows in a table
   
-    Provides: [err, count]
+  args.push(function(err, info) {
+    callback.call(self.app, err, info);
+  });
+  
+  this.addCacheData(o, args);
+  
+  this.client.query.apply(this.client, args);
+}
 
-    Cache: Store / {cacheId, timeout, param}
-    
-    @example
+/**
+  Deletes records by ID
 
-      db.countRows({table: 'users'}, callback);
+  Provides: [err, info]
 
-    @param {object} o
-    @param {function} callback
-    @public
-   */
+  Cache: Invalidate / {invalidate, param}
+  
+  @example
 
-  this.countRows = function(o, callback) {
-    var args, 
-        self = this,
-        table = o.table || '';
-        
-    args = ["SELECT COUNT('') AS total FROM " + table, []];
-    
-    args.push(function(err, results, fields) {
-      args = err ? [err, null] : [err, results[0].total];
-      callback.apply(self.app, args);
+    db.deleteById({
+      id: 4,
+      table: 'users'
+    }, function(err, info) {
+      console.exit([err, info]);
     });
-    
-    this.addCacheData(o, args);
-    
-    this.client.query.apply(this.client, args);
-  }
 
-  /**
-    Performs a query by ID, returning an object with the found ID's.
+  @param {object} o
+  @param {function} callback
+  @public
+  */
 
-    Provides: [err, results]
-
-    Cache: Store / {cacheId, timeout, param}
-    
-    @example
-
-      db.idExists({
-        id: [1,2],
-        table: 'users'
-      }, callback);
+MySQL.prototype.deleteById = function(o, callback) {
+  var args,
+      id = o.id,
+      table = o.table || '',
+      appendSql = o.appendSql || '';
   
-    @param {object} o
-    @param {function} callback
-    @public
-   */
+  if (typeof id == 'number') id = [id];
+  
+  args = [{
+    condition: "id IN (" + (id.toString()) + ")",
+    table: table,
+    appendSql: appendSql
+  }, callback]
+  
+  // Transfer cache keys to object in first arg
+  this.addCacheData(o, args[0]);
+  
+  this.deleteWhere.apply(this, args);
+}
 
-  this.idExists = function(o, callback) {
-    var args, 
-        self = this,
-        id = o.id,
-        table = o.table || '',
-        columns = o.columns || '*',
-        appendSql = o.appendSql || '';
-    
-    if (typeof id == 'number') id = [id];
-    
-    args = [o]; // Passing unmodified `o`
-    
-    args.push(function(err, results, fields) {
-      if (err) {
-        callback.call(self.app, err, null);
+/**
+  Performs a DELETE ... WHERE ... query
+  
+  Provides: [err, info]
+
+  Cache: Invalidate / {invalidate, param}
+  
+  @example
+
+    db.deleteWhere({
+      condition: 'id=?',
+      params: [5],
+      table: 'users'
+    }, function(err, info) {
+      console.exit([err, info]);
+    });
+
+  @param {object} o
+  @param {function} callback
+  @public
+ */
+
+MySQL.prototype.deleteWhere = function(o, callback) {
+  var args, 
+      self = this,
+      condition = o.condition || '',
+      params = o.params || [],
+      table = o.table || '',
+      appendSql = o.appendSql || '';
+      
+  if (!util.isArray(params)) params = [params];
+  
+  args = ["DELETE FROM " + table + " WHERE " + condition + " " + appendSql, params];
+  
+  args.push(function(err, info) {
+    callback.call(self.app, err, info);
+  });
+  
+  this.addCacheData(o, args);
+  
+  this.client.query.apply(this.client, args);
+}
+
+/**
+  Updates records by ID
+
+  Provides: [err, info]
+
+  Cache: Invalidate / {invalidate, param}
+  
+  @example
+
+    db.updateById({
+      id: 1,
+      table: 'users',
+      values: {user: 'ernie'}
+    }, function(err, info) {
+      console.exit([err, info]);
+    });
+
+  @param {object} o
+  @param {function} callback
+  @public
+ */
+
+MySQL.prototype.updateById = function(o, callback) {
+  var args,
+      id = o.id,
+      table = o.table || '',
+      values = o.values || {},
+      appendSql = o.appendSql || '';
+  
+  if (typeof id == 'number') id = [id];
+  
+  args = [{
+    condition: "id IN (" + (id.toString()) + ")",
+    table: table,
+    values: values,
+    appendSql: appendSql
+  }, callback]
+  
+  // Transfer cache keys to first arg
+  this.addCacheData(o, args[0]);
+  
+  this.updateWhere.apply(this, args);
+}
+
+/**
+  Performs an UPDATE ... WHERE ... query
+  
+  Provides: [err, info]
+
+  Cache: Invalidate / {invalidate, param}
+  
+  @example
+
+    db.updateWhere({
+      condition: 'id=?',
+      params: [1],
+      table: 'users',
+      values: {user: 'ernie'}
+    }, function(err, info) {
+      console.exit([err, info]);
+    });
+  
+  @param {object} o
+  @param {function} callback
+  @public
+ */
+
+MySQL.prototype.updateWhere = function(o, callback) {
+  var args,query, 
+      self = this,
+      condition = o.condition || '',
+      params = o.params || [],
+      table = o.table || '',
+      values = o.values || {},
+      appendSql = o.appendSql || '';
+  
+  query = "UPDATE " + table + " SET ";
+  
+  if (!util.isArray(params)) params = [params];
+  
+  for (var key in values) {
+    query += key + "=?, ";
+  }
+  
+  query = query.replace(regex.endingComma, '');
+  query += " WHERE " + condition + " " + appendSql;
+  
+  args = [query, _.values(values).concat(params)];
+  
+  args.push(function(err, info) {
+    callback.call(self.app, err, info);
+  });
+  
+  this.addCacheData(o, args);
+  
+  this.client.query.apply(this.client, args);
+}
+
+/**
+  Counts rows in a table
+
+  Provides: [err, count]
+
+  Cache: Store / {cacheId, timeout, param}
+  
+  @example
+
+    db.countRows({table: 'users'}, callback);
+
+  @param {object} o
+  @param {function} callback
+  @public
+ */
+
+MySQL.prototype.countRows = function(o, callback) {
+  var args, 
+      self = this,
+      table = o.table || '';
+      
+  args = ["SELECT COUNT('') AS total FROM " + table, []];
+  
+  args.push(function(err, results, fields) {
+    args = err ? [err, null] : [err, results[0].total];
+    callback.apply(self.app, args);
+  });
+  
+  this.addCacheData(o, args);
+  
+  this.client.query.apply(this.client, args);
+}
+
+/**
+  Performs a query by ID, returning an object with the found ID's.
+
+  Provides: [err, results]
+
+  Cache: Store / {cacheId, timeout, param}
+  
+  @example
+
+    db.idExists({
+      id: [1,2],
+      table: 'users'
+    }, callback);
+
+  @param {object} o
+  @param {function} callback
+  @public
+ */
+
+MySQL.prototype.idExists = function(o, callback) {
+  var args, 
+      self = this,
+      id = o.id,
+      table = o.table || '',
+      columns = o.columns || '*',
+      appendSql = o.appendSql || '';
+  
+  if (typeof id == 'number') id = [id];
+  
+  args = [o]; // Passing unmodified `o`
+  
+  args.push(function(err, results, fields) {
+    if (err) {
+      callback.call(self.app, err, null);
+    } else {
+      if (id.length == 1) {
+        callback.call(self.app, null, results[0]);
       } else {
-        if (id.length == 1) {
-          callback.call(self.app, null, results[0]);
-        } else {
-          var found = [],
-              records = {},
-              exists = {};
-          for (var result, i=0; i < results.length; i++) {
-            result = results[i];
-            found.push(result.id);
-            records[result.id] = results[i];
-          }
-          for (var num,i=0; i < id.length; i++) {
-            num = id[i];
-            exists[num] = (found.indexOf(num) >= 0) ? records[num] : null;
-          }
-          callback.apply(self.app, [null, exists]);
+        var num,
+            found = [],
+            records = {},
+            exists = {};
+        for (var result, i=0; i < results.length; i++) {
+          result = results[i];
+          found.push(result.id);
+          records[result.id] = results[i];
         }
+        for (i=0; i < id.length; i++) {
+          num = id[i];
+          exists[num] = (found.indexOf(num) >= 0) ? records[num] : null;
+        }
+        callback.apply(self.app, [null, exists]);
+      }
+    }
+  });
+  
+  // No need to transfer cache keys, since `o` is passed unmodified
+  
+  this.queryById.apply(this, args);
+}
+
+/**
+  Checks if a record exists
+
+  Provides: [err, exists, found]
+
+  Cache: Store / {cacheId, timeout, param}
+  
+  @example
+
+    db.recordExists({
+      condition: 'id=?',
+      params: [1],
+      table: 'users'
+    }, callback);
+  
+  @param {object} o
+  @param {function} callback
+  @public
+ */
+
+MySQL.prototype.recordExists = function(o, callback) {
+  var args, 
+      self = this,
+      condition = o.condition || '',
+      params = o.params || [],
+      table = o.table || '',
+      columns = o.columns || '*',
+      appendSql = o.appendSql || '';
+  
+  if (!util.isArray(params)) params = [params];
+  
+  args = [o]; // Passing unmodified `o`
+  
+  args.push(function(err, results, fields) {
+    if (err) {
+      callback.call(self.app, err, null, null);
+    } else {
+      if (results.length === 0) {
+        callback.call(self.app, err, false, results);
+      } else {
+        callback.call(self.app, err, true, results);
+      }
+    }
+  });
+  
+  // No need to transfer cache keys, since `o` is passed unmodified
+    
+  this.queryWhere.apply(this, args);
+}
+
+
+MySQL.prototype.__modelMethods = {
+  
+  /** Model API insert */
+  
+  insert: function(o, cdata, callback) {
+    var self = this;
+    
+    // Process callback & cache Data
+    if (typeof callback == 'undefined') { callback = cdata; cdata = {}; }
+    
+    // Validate, throw error on failure
+    this.__validateProperties(o);
+
+    // Save data into the database
+    this.driver.insertInto(_.extend({
+      table: this.context,
+      values: o
+    }, cdata), function(err, results) {
+      if (err) callback.call(self, err, null);
+      else {
+        callback.call(self, null, results.insertId);
       }
     });
-    
-    // No need to transfer cache keys, since `o` is passed unmodified
-    
-    this.queryById.apply(this, args);
-  }
-
-  /**
-    Checks if a record exists
+  },
   
-    Provides: [err, exists, found]
-
-    Cache: Store / {cacheId, timeout, param}
+  /** Model API get */
+  
+  get: function(o, cdata, callback) {
+    var self = this;
     
-    @example
-
-      db.recordExists({
-        condition: 'id=?',
-        params: [1],
-        table: 'users'
-      }, callback);
+    // Process callback & cache data
+    if (typeof callback == 'undefined') { callback = cdata; cdata = {}; }
     
-    @param {object} o
-    @param {function} callback
-    @public
-   */
-
-  this.recordExists = function(o, callback) {
-    var args, 
-        self = this,
-        condition = o.condition || '',
-        params = o.params || [],
-        table = o.table || '',
-        columns = o.columns || '*',
-        appendSql = o.appendSql || '';
-    
-    if (!util.isArray(params)) params = [params];
-    
-    args = [o]; // Passing unmodified `o`
-    
-    args.push(function(err, results, fields) {
-      if (err) {
-        callback.call(self.app, err, null, null);
-      } else {
-        if (results.length == 0) {
-          callback.call(self.app, err, false, results);
-        } else {
-          callback.call(self.app, err, true, results);
-        }
+    if (typeof o == 'number') { 
+      // If `o` is number: Convert to object
+      o = {id: o};
+    } else if (util.isArray(o)) {
+      
+      // If `o` is an array of params, process args recursively using multi
+      var arr = o, 
+          multi = this.multi();
+      for (var i=0; i < arr.length; i++) {
+        multi.get(arr[i], cdata);
       }
-    });
-    
-    // No need to transfer cache keys, since `o` is passed unmodified
-      
-    this.queryWhere.apply(this, args);
-  }
-
-  /* MODEL API */
-  
-  this.__modelMethods = {
-    
-    /** Model API insert */
-    
-    insert: function(o, cdata, callback) {
-      var self = this;
-      
-      // Process callback & cache Data
-      if (typeof callback == 'undefined') callback = cdata, cdata = {};
-      
-      // Validate, throw error on failure
-      this.__validateProperties(o);
-
-      // Save data into the database
-      this.driver.insertInto(_.extend({
-        table: this.context,
-        values: o
-      }, cdata), function(err, results) {
-        if (err) callback.call(self, err, null);
-        else {
-          callback.call(self, null, results.insertId);
-        }
+      multi.exec(function(err, results) {
+        callback.call(self, err, results);
       });
-    },
+      return;
+      
+    } else if (typeof o == 'object') {
+      
+      // IF `o` is object: Validate without checking required fields
+      this.__propertyCheck(o);
+      
+    } else {
+      
+      callback.call(self, new Error(util.format("%s: Wrong value for `o` argument", this.className)), null);
+      return;
+      
+    }
+      
+    // Prepare custom query
+    var condition, key, value,
+        keys = [], values = [];
     
-    /** Model API get */
+    for (key in o) {
+      keys.push(key);
+      values.push(o[key]);
+    }
     
-    get: function(o, cdata, callback) {
-      var self = this;
-      
-      // Process callback & cache data
-      if (typeof callback == 'undefined') callback = cdata, cdata = {};
-      
-      if (typeof o == 'number') { 
-        // If `o` is number: Convert to object
-        o = {id: o};
-      } else if (util.isArray(o)) {
-        
-        // If `o` is an array of params, process args recursively using multi
-        var arr = o, 
-            multi = this.multi();
-        for (var i=0; i < arr.length; i++) {
-          multi.get(arr[i], cdata);
-        }
-        multi.exec(function(err, results) {
-          callback.call(self, err, results);
-        });
-        return;
-        
-      } else if (typeof o == 'object') {
-        
-        // IF `o` is object: Validate without checking required fields
-        this.__propertyCheck(o);
-        
-      } else {
-        
-        callback.call(self, new Error(util.format("%s: Wrong value for `o` argument", this.className)), null);
-        return;
-        
-      }
-        
-      // Prepare custom query
-      var condition, key, value,
-          keys = [], values = [];
-      
-      for (key in o) {
-        keys.push(key), values.push(o[key]);
-      }
-      
-      // Prevent empty args
-      if (keys.length == 0) {
-        callback.call(self, new Error(util.format("%s: Empty arguments", this.className)));
-        return;
-      } else {
-        condition = keys.join('=? AND ') + '=?';
-      }
-      
-      // Get model data & return generated model (if found)
-      this.driver.queryWhere(_.extend({
-        condition: condition,
-        params: values,
-        table: this.context,
-      }, cdata), function(err, results) {
-        if (err) callback.call(self, err, null);
+    // Prevent empty args
+    if (keys.length === 0) {
+      callback.call(self, new Error(util.format("%s: Empty arguments", this.className)));
+      return;
+    } else {
+      condition = keys.join('=? AND ') + '=?';
+    }
+    
+    // Get model data & return generated model (if found)
+    this.driver.queryWhere(_.extend({
+      condition: condition,
+      params: values,
+      table: this.context,
+    }, cdata), function(err, results) {
+      if (err) callback.call(self, err, null);
+      else {
+        if (results.length === 0) callback.call(self, null, null);
         else {
-          if (results.length == 0) callback.call(self, null, null);
-          else {
-            var model = self.__createModel(results[0]);
-            callback.call(self, null, model);
-          }
+          var model = self.__createModel(results[0]);
+          callback.call(self, null, model);
         }
-      });
-    },
-    
-    /** Model API getAll */
-    
-    getAll: function(cdata, callback) {
-      var self = this, models = [];
+      }
+    });
+  },
+  
+  /** Model API getAll */
+  
+  getAll: function(cdata, callback) {
+    var self = this, models = [];
 
-      // Process callback & cache data
-      if (typeof callback == 'undefined') callback = cdata, cdata = {};
+    // Process callback & cache data
+    if (typeof callback == 'undefined') { callback = cdata; cdata = {}; }
 
-      this.driver.queryAll(_.extend({
-        table: this.context
-      }, cdata), function(err, results) {
-        if (err) callback.call(self, err, null);
-        else {
-          for (var i=0; i < results.length; i++) {
-            models.push(self.__createModel(results[i]));
-          }
-          callback.call(self, null, models);
+    this.driver.queryAll(_.extend({
+      table: this.context
+    }, cdata), function(err, results) {
+      if (err) callback.call(self, err, null);
+      else {
+        for (var i=0; i < results.length; i++) {
+          models.push(self.__createModel(results[i]));
         }
-      });
+        callback.call(self, null, models);
+      }
+    });
 
-    },
+  },
+  
+  /** Model API save */
+  
+  save: function(o, cdata, callback) {
+    var id, self = this;
     
-    /** Model API save */
+    // Process callback & cache data
+    if (typeof callback == 'undefined') { callback = cdata; cdata = {}; }
     
-    save: function(o, cdata, callback) {
-      var id, self = this;
+    // Update data. Validation has already been performed by ModelObject
+    id = o.id; 
+    delete o.id;
+    this.driver.updateById(_.extend({
+      id: id,
+      table: this.context,
+      values: o
+    }, cdata), function(err, results) {
+      callback.call(self, err);
+    });
+  },
+  
+  /** Model API delete */
+  
+  delete: function(id, cdata, callback) {
+    var self = this;
+    
+    // Process callback & cache data
+    if (typeof callback == 'undefined') { callback = cdata; cdata = {}; }
+
+    if (typeof id == 'number') {
       
-      // Process callback & cache data
-      if (typeof callback == 'undefined') callback = cdata, cdata = {};
-      
-      // Update data. Validation has already been performed by ModelObject
-      id = o.id, delete o.id;
-      this.driver.updateById(_.extend({
+      // Remove entry from database
+      this.driver.deleteById(_.extend({
         id: id,
         table: this.context,
-        values: o
+        appendSql: 'LIMIT 1'
       }, cdata), function(err, results) {
         callback.call(self, err);
       });
-    },
-    
-    /** Model API delete */
-    
-    delete: function(id, cdata, callback) {
-      var self = this;
       
-      // Process callback & cache data
-      if (typeof callback == 'undefined') callback = cdata, cdata = {};
-
-      if (typeof id == 'number') {
-        
-        // Remove entry from database
-        this.driver.deleteById(_.extend({
-          id: id,
-          table: this.context,
-          appendSql: 'LIMIT 1'
-        }, cdata), function(err, results) {
-          callback.call(self, err);
-        });
-        
-      } else if (util.isArray(id)) {
-        
-        // Remove multiple entries
-        var i, arr = id,
-            multi = this.multi();
-        
-        for (i=0; i < arr.length; i++) {
-          id = arr[i];
-          multi.delete(id);
-        }
-        
-        multi.exec(function(err, results) {
-          callback.call(self, err, results);
-        })
-        
-        return;
-        
-      } else {
-        
-        callback.call(self, new Error(util.format("%s: Wrong value for `id` parameter", this.className)));
-        
+    } else if (util.isArray(id)) {
+      
+      // Remove multiple entries
+      var i, arr = id,
+          multi = this.multi();
+      
+      for (i=0; i < arr.length; i++) {
+        id = arr[i];
+        multi.delete(id);
       }
-
+      
+      multi.exec(function(err, results) {
+        callback.call(self, err, results);
+      })
+      
+      return;
+      
+    } else {
+      
+      callback.call(self, new Error(util.format("%s: Wrong value for `id` parameter", this.className)));
+      
     }
-    
-  }
 
-});
+  }
+  
+}
 
 module.exports = MySQL;
