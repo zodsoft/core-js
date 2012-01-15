@@ -1,51 +1,30 @@
 
 /* Liquor */
 
+var liquor = require('liquor'),
+    util = require('util');
+
+// https://github.com/chjj/liquor
+
 function Liquor(app) {
-  
-  // https://github.com/chjj/liquor
-  
-  this.constructor.prototype.__construct.call(this, app);
-  
-}
-
-/* Liquor::prototype */
-
-framework.extend(Liquor.prototype, framework.engineProto);
-
-framework.extend(Liquor.prototype, new function() {
-  
-  var liquor = require('liquor');
-  
+  this.app = app;
   this.options = {
     pretty: true
   }
-  
   this.module = liquor;
-  
   this.multiPart = true;
-  
   this.extensions = ['liquor'];
+}
 
-  this.render = function(data) {
+util.inherits(Liquor, framework.lib.engine);
 
-    var func = this.getCachedFunction(arguments);
-    
-    if (func === null) {
-      
-      // Compile Liquor Template
-      func = liquor.compile(data, this.options);
-      
-      // Cache rendering function
-      this.cacheFunction(func, arguments);
-      
-    }
-    
-    // Return evaluated buffer or exception
-    return this.eval(func, arguments);
-    
+Liquor.prototype.render = function(data) {
+  var func = this.getCachedFunction(arguments);
+  if (func === null) {
+    func = liquor.compile(data, this.options);
+    this.cacheFunction(func, arguments);
   }
+  return this.eval(func, arguments);
+}
   
-});
-
 module.exports = Liquor;

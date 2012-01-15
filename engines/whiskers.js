@@ -1,47 +1,27 @@
 
 /* Whiskers */
 
+var whiskers = require('whiskers'),
+    util = require('util');
+
+// https://github.com/gsf/whiskers.js/tree
+
 function Whiskers(app) {
-  
-  // https://github.com/gsf/whiskers.js/tree
-  
-  this.constructor.prototype.__construct.call(this, app);
-  
+  this.app = app;
+  this.module = whiskers;
+  this.multiPart = true;
+  this.extensions = ['whiskers'];
 }
 
-/* Whiskers::prototype */
+util.inherits(Whiskers, framework.lib.engine);
 
-framework.extend(Whiskers.prototype, framework.engineProto);
-
-framework.extend(Whiskers.prototype, new function() {
-  
-  var whiskers = require('whiskers');
-  
-  this.module = whiskers;
-  
-  this.multiPart = true;
-  
-  this.extensions = ['whiskers'];
-
-  this.render = function(data) {
-
-    var func = this.getCachedFunction(arguments);
-    
-    if (func === null) {
-      
-      // Compile Whiskers Template
-      func = whiskers.compile(data);
-      
-      // Cache rendering function
-      this.cacheFunction(func, arguments);
-      
-    }
-    
-    // Return evaluated buffer or exception
-    return this.eval(func, arguments);
-    
+Whiskers.prototype.render = function(data) {
+  var func = this.getCachedFunction(arguments);
+  if (func === null) {
+    func = whiskers.compile(data);
+    this.cacheFunction(func, arguments);
   }
-  
-});
+  return this.eval(func, arguments);
+}
 
 module.exports = Whiskers;

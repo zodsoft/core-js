@@ -1,69 +1,48 @@
 
 /* Jazz */
 
+var jazz = require('jazz'),
+    util = require('util');
+
+// https://github.com/shinetech/jazz
+
 function Jazz(app) {
-  
-  // https://github.com/shinetech/jazz
-  
-  this.constructor.prototype.__construct.call(this, app);
-  
+  this.app = app;
+  this.module = jazz;
+  this.async = true;
+  this.multiPart = true;
+  this.extensions = ['jazz'];
 }
 
-/* Jazz::prototype */
+util.inherits(Jazz, framework.lib.engine);
 
-framework.extend(Jazz.prototype, framework.engineProto);
-
-framework.extend(Jazz.prototype, new function() {
-  
-  var jazz = require('jazz');
-  
-  this.module = jazz;
-  
-  this.async = true;
-  
-  this.multiPart = true;
-  
-  this.extensions = ['jazz'];
-  
-  this.render = function(data) {
-
-    var tpl, func = this.getCachedFunction(arguments);
-    
-    if (func === null) {
-      
-      // Compile jazz template
-      tpl = jazz.compile(data);
-      
-      // Create rendering function
-      func = function(locals, callback) {
-        tpl.eval(locals, callback);
-      }
-      
-      // Cache rendering function
-      this.cacheFunction(func, arguments);
-      
+Jazz.prototype.render = function(data) {
+  var tpl, func = this.getCachedFunction(arguments);
+  if (func === null) {
+    tpl = jazz.compile(data);
+    func = function(locals, callback) {
+      tpl.eval(locals, callback);
     }
-    
-    // Return evaluated buffer or exception
-    return this.eval(func, arguments);
-    
+    this.cacheFunction(func, arguments);
   }
-  
-  this.makePartialAsync = function(func) {
-    
-    return this.cache[func.id] || this.__makePartialAsync(func, 
-      // Async
-      function(arg, callback) {
-        func(arg, function(buf) {
-          callback(buf);
-        });
-      },
-      // Sync
-      function(arg, callback) {
-        callback(func(arg));
+  return this.eval(func, arguments);
+}
+
+Jazz.prototype.makePartialAsync = function(func) {
+  var cached = this.cache[func.id];
+  if (cached instanceof Function) { 
+    return cached;
+  } else {
+    function async(arg, callback) {
+      func(arg, function(buf) {
+        callback(buf);
       });
+    }
+    function sync(arg, callback) {
+      callback(func(arg));
+    }
+    return this.__makePartialAsync(func, async, sync);
   }
-  
-});
+}
 
 module.exports = Jazz;

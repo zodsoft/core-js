@@ -1,47 +1,29 @@
 
 /* Haml */
 
+var haml = require('hamljs'),
+    util = require('util');
+    
+// https://github.com/visionmedia/haml.js
+
 function Haml(app) {
-  
-  // https://github.com/visionmedia/haml.js
-  
-  this.constructor.prototype.__construct.call(this, app);
-  
+  this.app = app;
+  this.module = haml;
+  this.multiPart = false;
+  this.extensions = ['haml'];
 }
 
-/* Haml::prototype */
+util.inherits(Haml, framework.lib.engine);
 
-framework.extend(Haml.prototype, framework.engineProto);
-
-framework.extend(Haml.prototype, new function() {
-  
-  var haml = require('hamljs');
-
-  this.module = haml;
-
-  this.multiPart = false;
-
-  this.extensions = ['haml'];
-
-  this.render = function(data) {
-
-    var tpl, func = this.getCachedFunction(arguments);
-    
-    if (func === null) {
-      
-      // Create rendering function
-      func = function(vars) { return haml.render(data, {locals: vars}); }
-      
-      // Cache rendering function
-      this.cacheFunction(func, arguments);      
-
+Haml.prototype.render = function(data) {
+  var tpl, func = this.getCachedFunction(arguments);
+  if (func === null) {
+    func = function(vars) { 
+      return haml.render(data, {locals: vars}); 
     }
-    
-    // Return evaluated buffer or exception
-    return this.eval(func, arguments);
-    
+    this.cacheFunction(func, arguments);      
   }
-  
-});
+  return this.eval(func, arguments);
+}
 
 module.exports = Haml;

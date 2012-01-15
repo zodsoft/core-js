@@ -1,59 +1,39 @@
 
 /* Hogan */
 
+var hogan = require('hogan.js'),
+    util = require('util');
+    
+// https://github.com/twitter/hogan.js
+
 function Hogan(app) {
-  
-  // https://github.com/twitter/hogan.js
-  
-  this.constructor.prototype.__construct.call(this, app);
-  
+  this.app = app;
+  this.module = hogan;
+  this.multiPart = true;
+  this.extensions = ['mustache'];
 }
 
-/* Hogan::prototype */
+util.inherits(Hogan, framework.lib.engine);
 
-framework.extend(Hogan.prototype, framework.engineProto);
-
-framework.extend(Hogan.prototype, new function() {
-  
-  var hogan = require('hogan.js'),
-      superEval = framework.engineProto.eval;
-  
-  this.module = hogan;
-  
-  this.multiPart = true;
-  
-  this.extensions = ['mustache'];
-  
-  this.render = function(data, vars) {
-
-    var tpl, func = this.getCachedFunction(arguments);
-    
-    if (func === null) {
-      
-      // Compile hogan template
-      tpl = hogan.compile(data);
-      
-      func = function(data, partials) { return tpl.render(data, partials); }
-      func.tpl = tpl;
-      
-      // Cache rendering function
-      this.cacheFunction(func, arguments);
-      
+Hogan.prototype.render = function(data, vars) {
+  var tpl, func = this.getCachedFunction(arguments);
+  if (func === null) {
+    tpl = hogan.compile(data);
+    func = function(data, partials) { 
+      return tpl.render(data, partials); 
     }
-    
-    // Return evaluated buffer. Pass an extra object with partials
-    return this.eval(func, arguments, true);
-    
+    func.tpl = tpl;
+    this.cacheFunction(func, arguments);
   }
-  
-  this.returnPartials = function() {
-    var f, partials = {}, appPartials = this.app.views.partials;
-    for (f in appPartials) {
-      partials[f] = appPartials[f].tpl || appPartials[f];
-    }
-    return partials;
+  return this.eval(func, arguments, true);
+}
+
+Hogan.prototype.returnPartials = function() {
+  var f, partials = {}, appPartials = this.app.views.partials;
+  for (f in appPartials) {
+    partials[f] = appPartials[f].tpl || appPartials[f];
   }
-  
-});
+  return partials;
+}
 
 module.exports = Hogan;
