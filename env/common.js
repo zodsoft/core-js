@@ -1,10 +1,10 @@
 
 /* Common Environment */
 
-var CFramework = require('../lib/framework')
+var CoreJS = require('../lib/framework')
 
 .configure('vhosts', {
   'localhost': 'skeleton'
 });
 
-module.exports = CFramework;
+module.exports = CoreJS;

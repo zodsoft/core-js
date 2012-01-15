@@ -1,7 +1,7 @@
 
 /* Development Environment */
 
-var CFramework = require('./common.js')
+var CoreJS = require('./common.js')
 
 .configure('environment', 'DEVELOPMENT')
 
@@ -19,4 +19,4 @@ var CFramework = require('./common.js')
 
 .on('init', function() {});
 
-new CFramework();
+new CoreJS();
