@@ -40,9 +40,6 @@ Kernel.prototype.render = function(data) {
 
 Kernel.prototype.compile = function(source, vars, relPath) {
   try {
-    // Compensate for extra space
-    if (source.charAt(0) === '\n') { source = '\n' + source; }
-    if (source.charAt(source.length-1) === '\n') { source += '\n'; }
     return Function("var helpers = this;\nreturn " 
     + generator(parser(tokenizer(source), source, this.app.fullPath(relPath))))
     .call(helpers);

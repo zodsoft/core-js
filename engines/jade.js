@@ -2,7 +2,8 @@
 /* Jade */
 
 var jade = require('jade'),
-    util = require('util');
+    util = require('util'),
+    _ = require('underscore');
 
 // https://github.com/visionmedia/jade
 
