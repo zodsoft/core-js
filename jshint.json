@@ -33,6 +33,7 @@
   "regexdash": false,
   "laxbreak": true,
   "expr": true,
+  "loopfunc": true,
   
   // Environments
   
