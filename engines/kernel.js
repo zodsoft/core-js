@@ -48,21 +48,14 @@ Kernel.prototype.compile = function(source, vars, relPath) {
   }
 }
 
-Kernel.prototype.makePartialAsync = function(func) {
-  var cached = this.cache[func.id];
-  if (cached instanceof Function) { 
-    return cached;
-  } else {
-    function async(arg, callback) {
-      func(arg, function(buf) {
-        callback(null, buf);
-      });
-    }
-    function sync(arg, callback) {
-      callback(null, func(arg));
-    }
-    return this.__makePartialAsync(func, async, sync);
-  }
+Kernel.prototype.asyncPartial = function(arg, callback) {
+  func(arg, function(buf) {
+    callback(null, buf);
+  });
+}
+
+Kernel.prototype.syncPartial = function(arg, callback) {
+  callback(null, func(arg));
 }
 
 module.exports = Kernel;

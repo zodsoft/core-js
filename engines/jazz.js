@@ -28,21 +28,14 @@ Jazz.prototype.render = function(data) {
   return this.evaluate(func, arguments);
 }
 
-Jazz.prototype.makePartialAsync = function(func) {
-  var cached = this.cache[func.id];
-  if (cached instanceof Function) { 
-    return cached;
-  } else {
-    function async(arg, callback) {
-      func(arg, function(buf) {
-        callback(buf);
-      });
-    }
-    function sync(arg, callback) {
-      callback(func(arg));
-    }
-    return this.__makePartialAsync(func, async, sync);
-  }
+Jazz.prototype.asyncPartial = function(arg, callback) {
+  func(arg, function(buf) {
+    callback(buf);
+  });
+}
+
+Jazz.prototype.syncPartial = function(arg, callback) {
+  callback(func(arg));
 }
 
 module.exports = Jazz;
