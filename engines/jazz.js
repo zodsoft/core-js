@@ -28,14 +28,18 @@ Jazz.prototype.render = function(data) {
   return this.evaluate(func, arguments);
 }
 
-Jazz.prototype.asyncPartial = function(arg, callback) {
-  func(arg, function(buf) {
-    callback(buf);
-  });
+Jazz.prototype.asyncPartial = function(func) {
+  return function(arg, callback) {
+    func(arg, function(buf) {
+      callback(buf);
+    });
+  }
 }
 
-Jazz.prototype.syncPartial = function(arg, callback) {
-  callback(func(arg));
+Jazz.prototype.syncPartial = function(func) {
+  return function(arg, callback) {
+    callback(func(arg));
+  }
 }
 
 module.exports = Jazz;

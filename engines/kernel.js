@@ -48,14 +48,18 @@ Kernel.prototype.compile = function(source, vars, relPath) {
   }
 }
 
-Kernel.prototype.asyncPartial = function(arg, callback) {
-  func(arg, function(buf) {
-    callback(null, buf);
-  });
+Kernel.prototype.asyncPartial = function(func) {
+  return function(arg, callback) {
+    func(arg, function(buf) {
+      callback(null, buf);
+    });
+  }
 }
 
-Kernel.prototype.syncPartial = function(arg, callback) {
-  callback(null, func(arg));
+Kernel.prototype.syncPartial = function(func) {
+  return function(arg, callback) {
+    callback(null, func(arg));
+  }
 }
 
 module.exports = Kernel;
