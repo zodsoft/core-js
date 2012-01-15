@@ -25,7 +25,7 @@ Jazz.prototype.render = function(data) {
     }
     this.cacheFunction(func, arguments);
   }
-  return this.eval(func, arguments);
+  return this.evaluate(func, arguments);
 }
 
 Jazz.prototype.makePartialAsync = function(func) {

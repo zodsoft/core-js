@@ -29,7 +29,7 @@ function MyEngine(app) {
     }
     
     // 3. Return evaluated function with passed parameters
-    return this.eval(func, arguments);
+    return this.evaluate(func, arguments);
 
   }
   

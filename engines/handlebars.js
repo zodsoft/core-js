@@ -21,7 +21,7 @@ Handlebars.prototype.render = function(data) {
     func = handlebars.compile(data);
     this.cacheFunction(func, arguments);
   }
-  return this.eval(func, arguments, true);
+  return this.evaluate(func, arguments, true);
 }
 
 Handlebars.prototype.registerHelper = function(alias, callback) {

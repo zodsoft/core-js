@@ -22,7 +22,7 @@ EJS.prototype.render = function(data) {
     func = ejs.compile(data, this.options);
     this.cacheFunction(func, arguments);
   }
-  return this.eval(func, arguments);
+  return this.evaluate(func, arguments);
 }
 
 module.exports = EJS;

@@ -27,7 +27,7 @@ Swig.prototype.render = function(data) {
     func = swig.compile(data, this.options);
     this.cacheFunction(func, arguments);
   }
-  return this.eval(func, arguments);
+  return this.evaluate(func, arguments);
 }
 
 module.exports = Swig;

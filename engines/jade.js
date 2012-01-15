@@ -26,7 +26,7 @@ Jade.prototype.render = function(data, vars, relPath) {
     func = jade.compile(data, options);
     this.cacheFunction(func, arguments);
   }
-  return this.eval(func, arguments);
+  return this.evaluate(func, arguments);
 }
 
 module.exports = Jade;

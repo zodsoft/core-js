@@ -23,7 +23,7 @@ Haml.prototype.render = function(data) {
     }
     this.cacheFunction(func, arguments);      
   }
-  return this.eval(func, arguments);
+  return this.evaluate(func, arguments);
 }
 
 module.exports = Haml;

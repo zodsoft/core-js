@@ -24,7 +24,7 @@ Liquor.prototype.render = function(data) {
     func = liquor.compile(data, this.options);
     this.cacheFunction(func, arguments);
   }
-  return this.eval(func, arguments);
+  return this.evaluate(func, arguments);
 }
   
 module.exports = Liquor;

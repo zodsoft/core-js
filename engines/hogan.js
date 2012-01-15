@@ -25,7 +25,7 @@ Hogan.prototype.render = function(data, vars) {
     func.tpl = tpl;
     this.cacheFunction(func, arguments);
   }
-  return this.eval(func, arguments, true);
+  return this.evaluate(func, arguments, true);
 }
 
 Hogan.prototype.returnPartials = function() {
