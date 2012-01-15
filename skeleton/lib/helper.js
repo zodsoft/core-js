@@ -1,6 +1,8 @@
 
-function Helper(app) { this.extends('helper');
+function Helper(app) {
   
 }
+
+framework.inherits(Helper, 'helper');
 
 module.exports = Helper;

@@ -1,6 +1,8 @@
 
-function Model(app) { this.extends('model');
+function Model(app) {
   
 }
+
+framework.inherits(Model, 'model');
 
 module.exports = Model;
