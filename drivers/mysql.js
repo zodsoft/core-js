@@ -18,23 +18,34 @@ function MySQL(app, config) {
     storage: 'redis'
   } */
   
+  var self = this;
+  
   config = config || {};
+  config.host = config.host || 'localhost';
+  config.port = config.port || 3369;
+  
   this.className = this.constructor.name;
   this.app = app;
   this.config = config;
   
-  // 1. Set client
-  this.client = mysql.createClient(config);
+  framework.util.checkPort(config.port, function(err) {
+    if (err) {
+      app.log(util.format("MySQL [%s:%s] %s", config.host, config.port, err.code));
+    } else {
+      // Set client
+      this.client = mysql.createClient(config);
+
+      // Assign storage
+      if (typeof config.storage == 'string') {
+        this.storage = app.getResource('storages/' + config.storage);
+      }
+
+      // Set caching function
+      if (this.storage != null) this.setCacheFunc(this.client, 'query');
+    }
+  });
   
-  // 2. Assign storage
-  if (typeof config.storage == 'string') {
-    this.storage = app.getResource('storages/' + config.storage);
-  }
-  
-  // 3. Set caching function
-  if (this.storage != null) this.setCacheFunc(this.client, 'query');
-  
-  // 4. Only set important properties enumerable
+  // Only set important properties enumerable
   framework.util.onlySetEnumerable(this, ['className']);
   
 }

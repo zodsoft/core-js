@@ -44,7 +44,7 @@ framework.extend(RedisStorage.prototype, new function() {
     
     framework.util.checkPort(config.port, function(err) {
       if (err) {
-        app.log(util.format("Redis: Can't connect to %s:%s: %s", config.host, config.port, err.code));
+        app.log(util.format("Redis [%s:%s] %s", config.host, config.port, err.code));
       } else {
         // Set redis client
         self.client = redis.createClient(config.port, config.host, self.options);
