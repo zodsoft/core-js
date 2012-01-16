@@ -11,7 +11,7 @@ module.exports = {
     user: 'db_user',
     password: 'db_pass',
     database: 'test_db',
-    storage: 'redis:query'
+    storage: 'redis'
   }
 
 }

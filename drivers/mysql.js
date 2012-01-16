@@ -32,6 +32,7 @@ function MySQL(app, config) {
     if (err) {
       app.log(util.format("MySQL [%s:%s] %s", config.host, config.port, err.code));
     } else {
+      console.log('here');
       // Set client
       this.client = mysql.createClient(config);
 
