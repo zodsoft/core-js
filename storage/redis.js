@@ -30,34 +30,46 @@ framework.extend(RedisStorage.prototype, new function() {
   
   // Constructor
   this.__construct = function(app, config) {
+    
     var self = this;
+    
+    config = config || {};
+    config.host = config.host || 'localhost';
+    config.port = config.port || 6379;
+    
     this.app = app;
     this.db = 0;
-    this.config = config || {};
+    this.config = config;
     this.className = this.constructor.name;
     
-    // Set redis client
-    this.client = redis.createClient(config.port, config.host, this.options);
+    framework.util.checkPort(config.port, function(err) {
+      if (err) {
+        app.log(util.format("Redis: Can't connect to %s:%s: %s", config.host, config.port, err.code));
+      } else {
+        // Set redis client
+        self.client = redis.createClient(config.port, config.host, self.options);
 
-    // Authenticate if password provided
-    if (typeof config.pass == 'string') {
-      client.auth(config.pass, function(err, res) {
-        if (err) throw err;
-      });
-    }
-    
-    // Handle error event
-    this.client.on('error', function(err) {
-      app.log(err);
+        // Authenticate if password provided
+        if (typeof config.pass == 'string') {
+          client.auth(config.pass, function(err, res) {
+            if (err) throw err;
+          });
+        }
+
+        // Handle error event
+        self.client.on('error', function(err) {
+          app.log(err);
+        });
+
+        // Select db if specified
+        if (typeof config.db == 'number' && config.db !== 0) {
+          self.db = config.db;
+          self.client.select(config.db, function(err, res) {
+            if (err) throw err;
+          });
+        }
+      }
     });
-
-    // Select db if specified
-    if (typeof config.db == 'number' && config.db !== 0) {
-      this.db = config.db;
-      self.client.select(config.db, function(err, res) {
-        if (err) throw err;
-      });
-    }
     
     // Set enumerable properties
     framework.util.onlySetEnumerable(this, ['className', 'db']);
