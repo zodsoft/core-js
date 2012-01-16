@@ -1,6 +1,10 @@
 
 /* RedisStorage */
 
+var _ = require('underscore'),
+    redis = require('redis'),
+    util = require('util');
+
 function RedisStorage(app, config) {
   
   /** { 
@@ -9,242 +13,224 @@ function RedisStorage(app, config) {
     db: 1,
     pass: 'password'
    } */
-  
-  this.constructor.prototype.__construct.call(this, app, config);
-  
+
+   var self = this;
+   
+   config = config || {};
+   config.host = config.host || 'localhost';
+   config.port = config.port || 6379;
+   
+   this.app = app;
+   this.db = 0;
+   this.config = config;
+   this.className = this.constructor.name;
+   
+   framework.util.checkPort(config.port, function(err) {
+     if (err) {
+       app.log(util.format("Redis [%s:%s] %s", config.host, config.port, err.code));
+     } else {
+       // Set redis client
+       self.client = redis.createClient(config.port, config.host, self.options);
+
+       // Authenticate if password provided
+       if (typeof config.pass == 'string') {
+         self.client.auth(config.pass, function(err, res) {
+           if (err) throw err;
+         });
+       }
+
+       // Handle error event
+       self.client.on('error', function(err) {
+         app.log(err);
+       });
+
+       // Select db if specified
+       if (typeof config.db == 'number' && config.db !== 0) {
+         self.db = config.db;
+         self.client.select(config.db, function(err, res) {
+           if (err) throw err;
+         });
+       }
+     }
+   });
+   
+   // Set enumerable properties
+   framework.util.onlySetEnumerable(this, ['className', 'db']);
 }
 
-/* RedisStorage::prototype */
+util.inherits(RedisStorage, framework.lib.storage);
 
-framework.extend(RedisStorage.prototype, framework.storageProto);
+RedisStorage.prototype.options = {};
 
-framework.extend(RedisStorage.prototype, new function() {
+
+/** Storage API get */
+
+RedisStorage.prototype.get = function(key, callback) {
+  var self = this;
   
-  var _ = require('underscore'),
-      redis = require('redis'),
-      util = require('util');
-
-  this.options = {
-    // Parser defaults to hiredis if installed
-  }
-  
-  // Constructor
-  this.__construct = function(app, config) {
+  // If key is a string
+  if (typeof key == 'string') {
     
-    var self = this;
-    
-    config = config || {};
-    config.host = config.host || 'localhost';
-    config.port = config.port || 6379;
-    
-    this.app = app;
-    this.db = 0;
-    this.config = config;
-    this.className = this.constructor.name;
-    
-    framework.util.checkPort(config.port, function(err) {
-      if (err) {
-        app.log(util.format("Redis [%s:%s] %s", config.host, config.port, err.code));
-      } else {
-        // Set redis client
-        self.client = redis.createClient(config.port, config.host, self.options);
-
-        // Authenticate if password provided
-        if (typeof config.pass == 'string') {
-          client.auth(config.pass, function(err, res) {
-            if (err) throw err;
-          });
-        }
-
-        // Handle error event
-        self.client.on('error', function(err) {
-          app.log(err);
-        });
-
-        // Select db if specified
-        if (typeof config.db == 'number' && config.db !== 0) {
-          self.db = config.db;
-          self.client.select(config.db, function(err, res) {
-            if (err) throw err;
-          });
-        }
-      }
-    });
-    
-    // Set enumerable properties
-    framework.util.onlySetEnumerable(this, ['className', 'db']);
-  }
-  
-
-  /** Storage API get */
-  
-  this.get = function(key, callback) {
-    var self = this;
-    
-    // If key is a string
-    if (typeof key == 'string') {
-      
-      this.client.get(key, function(err, data) {
-        if (err) callback.call(self, err, null);
-        else {
-          callback.call(self, null, data);
-        }
-      });
-      
-    // If key is an array
-    } else if (util.isArray(key)) {
-      
-      var i, out = {}, keys = key, 
-          multi = this.client.multi();
-          
-      for (i=0; i < keys.length; i++) {
-        multi.get(keys[i]);
-      }
-      
-      multi.exec(function(err, data) {
-        if (err) callback.call(self, err, null);
-        else {
-          for (i=0; i < keys.length; i++) {
-            out[keys[i]] = data[i];
-          }
-          callback.call(self, null, out);
-        }
-      });
-    }
-  }
-  
-  /** Storage API getHash */
-  
-  this.getHash = function(key, callback) {
-    var self = this;
-    this.client.hgetall(key, function(err, data) {
+    this.client.get(key, function(err, data) {
       if (err) callback.call(self, err, null);
       else {
         callback.call(self, null, data);
       }
     });
-  }
-  
-  /** Storage API set */
-  
-  this.set = function(key, value, callback) {
-    var self = this;
     
-    // If key is a string
-    if (typeof key == 'string') {
-      
-      // Set single value
-      this.client.set(key, value, function(err, data) {
-        if (err) callback.call(self, err);
-        else {
-          callback.call(self, null);
-        }
-      });
-      
-    // If key is an array
-    } else if (typeof key == 'object') {
-      
-      // Set multiple values
-      var object = key,
-          callback = value,
-          multi = this.client.multi();
-          
-      for (key in object) {
-        multi.set(key, object[key]);
-      }
-      
-      multi.exec(function(err, data) {
-        if (err) callback.call(self, err);
-        else {
-          callback.call(self, null);
-        }
-      });
-      
+  // If key is an array
+  } else if (util.isArray(key)) {
+    
+    var i, out = {}, keys = key, 
+        multi = this.client.multi();
+        
+    for (i=0; i < keys.length; i++) {
+      multi.get(keys[i]);
     }
+    
+    multi.exec(function(err, data) {
+      if (err) callback.call(self, err, null);
+      else {
+        for (i=0; i < keys.length; i++) {
+          out[keys[i]] = data[i];
+        }
+        callback.call(self, null, out);
+      }
+    });
   }
+}
+
+/** Storage API getHash */
+
+RedisStorage.prototype.getHash = function(key, callback) {
+  var self = this;
+  this.client.hgetall(key, function(err, data) {
+    if (err) callback.call(self, err, null);
+    else {
+      callback.call(self, null, data);
+    }
+  });
+}
+
+/** Storage API set */
+
+RedisStorage.prototype.set = function(key, value, callback) {
+  var self = this;
   
-  /** Storage API setHash */
-  
-  this.setHash = function(key, object, callback) {
-    var self = this;
-    this.client.hmset(key, object, function(err, data) {
+  // If key is a string
+  if (typeof key == 'string') {
+    
+    // Set single value
+    this.client.set(key, value, function(err, data) {
       if (err) callback.call(self, err);
       else {
         callback.call(self, null);
       }
     });
-  }
-  
-  /** Storage API updateHash */
-  
-  this.updateHash = function(key, object, callback) {
-    var key, self = this,
-        args = [key];
+    
+  // If key is an array
+  } else if (typeof key == 'object') {
+    
+    // Set multiple values
+    var object = key,
+        multi = this.client.multi();
+    
+    callback = value;
         
-    for (key in object) {
-      args.push(key);
-      args.push(object[key]);
+    for (var x in object) {
+      multi.set(x, object[x]);
     }
     
-    args.push(function(err, results) {
-      callback.call(self, err);
-    });
-    
-    this.client.hset.apply(this.client, args);
-  }
-  
-  /** Storage API delete */
-  
-  this.delete = function(key, callback) {
-    var self = this;
-    
-    // If key is a string
-    if (typeof key == 'string') {
-      
-      this.client.del(key, function(err, data) {
-        if (err) callback.call(self, err);
-        else {
-          callback.call(self, null);
-        }
-      });
-      
-    // If key is an array
-    } else if (util.isArray(key)) {
-      var i, keys = key,
-          multi = this.client.multi();
-          
-      for (i=0; i < keys.length; i++) {
-        multi.del(keys[i]);
+    multi.exec(function(err, data) {
+      if (err) callback.call(self, err);
+      else {
+        callback.call(self, null);
       }
-      
-      multi.exec(function(err, data) {
-        if (err) callback.call(self, err);
-        else {
-          callback.call(self, null);
-        }
-      });
-      
-    }
-  }
-  
-  /** Storage API rename */
-  
-  this.rename = function(oldkey, newkey, callback) {
-    var self = this;
-    this.client.rename(oldkey, newkey, function(err, result) {
-      callback.call(self, err);
     });
+    
   }
-  
-  /** Storage API expire */
-  
-  this.expire = function(key, timeout, callback) {
-    var self = this;
-    this.client.expire(key, timeout, function(err, result) {
-      callback.call(self, err);
-    });
-  }
-  
-});
+}
 
+/** Storage API setHash */
+
+RedisStorage.prototype.setHash = function(key, object, callback) {
+  var self = this;
+  this.client.hmset(key, object, function(err, data) {
+    if (err) callback.call(self, err);
+    else {
+      callback.call(self, null);
+    }
+  });
+}
+
+/** Storage API updateHash */
+
+RedisStorage.prototype.updateHash = function(key, object, callback) {
+  var self = this,
+      args = [key];
+      
+  for (var x in object) {
+    args.push(x);
+    args.push(object[x]);
+  }
+  
+  args.push(function(err, results) {
+    callback.call(self, err);
+  });
+  
+  this.client.hset.apply(this.client, args);
+}
+
+/** Storage API delete */
+
+RedisStorage.prototype.delete = function(key, callback) {
+  var self = this;
+  
+  // If key is a string
+  if (typeof key == 'string') {
+    
+    this.client.del(key, function(err, data) {
+      if (err) callback.call(self, err);
+      else {
+        callback.call(self, null);
+      }
+    });
+    
+  // If key is an array
+  } else if (util.isArray(key)) {
+    var i, keys = key,
+        multi = this.client.multi();
+        
+    for (i=0; i < keys.length; i++) {
+      multi.del(keys[i]);
+    }
+    
+    multi.exec(function(err, data) {
+      if (err) callback.call(self, err);
+      else {
+        callback.call(self, null);
+      }
+    });
+    
+  }
+}
+
+/** Storage API rename */
+
+RedisStorage.prototype.rename = function(oldkey, newkey, callback) {
+  var self = this;
+  this.client.rename(oldkey, newkey, function(err, result) {
+    callback.call(self, err);
+  });
+}
+
+/** Storage API expire */
+
+RedisStorage.prototype.expire = function(key, timeout, callback) {
+  var self = this;
+  this.client.expire(key, timeout, function(err, result) {
+    callback.call(self, err);
+  });
+}
+  
 module.exports = RedisStorage;
