@@ -3,6 +3,6 @@ function ApplicationModel() {
   
 }
 
-require('util').inherits(ApplicationModel, framework.lib.model)
+framework.inherits(ApplicationModel, 'model');
 
 module.exports = ApplicationModel;

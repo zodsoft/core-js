@@ -3,6 +3,6 @@ function ApplicationController() {
   
 }
 
-require('util').inherits(ApplicationController, framework.lib.controller)
+framework.inherits(ApplicationController, 'controller');
 
 module.exports = ApplicationController;

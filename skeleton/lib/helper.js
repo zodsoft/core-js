@@ -3,6 +3,6 @@ function ApplicationHelper() {
   
 }
 
-require('util').inherits(ApplicationHelper, framework.lib.helper)
+framework.inherits(ApplicationHelper, 'helper');
 
 module.exports = ApplicationHelper;
