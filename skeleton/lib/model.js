@@ -1,8 +1,8 @@
 
-function Model(app) {
+function ApplicationModel() {
   
 }
 
-framework.inherits(Model, 'model');
+require('util').inherits(ApplicationModel, framework.lib.model)
 
-module.exports = Model;
+module.exports = ApplicationModel;

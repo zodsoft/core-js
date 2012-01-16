@@ -1,8 +1,8 @@
 
-function Controller(app) {
+function ApplicationController() {
   
 }
 
-framework.inherits(Controller, 'controller');
+require('util').inherits(ApplicationController, framework.lib.controller)
 
-module.exports = Controller;
+module.exports = ApplicationController;

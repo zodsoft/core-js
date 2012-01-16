@@ -1,8 +1,8 @@
 
-function Helper(app) {
+function ApplicationHelper() {
   
 }
 
-framework.inherits(Helper, 'helper');
+require('util').inherits(ApplicationHelper, framework.lib.helper)
 
-module.exports = Helper;
+module.exports = ApplicationHelper;
