@@ -4,7 +4,8 @@
  * Linting tool, using jshint with options from ../jshint.json
  */
  
-var path = require('path'),
+var isHelp, buffer,
+    path = require('path'),
     util = require('util'),
     cp = require('child_process');
 
@@ -24,21 +25,36 @@ var colorRegex = /(\n)?(.*?): line (\d+), (.*?), (.*?)(\n)/g
 // Functions
 function logger(data) {
   data = data.toString('utf-8');
-  if (data.indexOf('Usage: jshint path path2 [options]') >= 0) {
-    console.log(util.format("Usage: %s [--scan] file\n", path.basename(process.argv[1])));
+  isHelp = (data.indexOf('Usage: jshint path path2 [options]') >= 0);
+  if (isHelp) {
+    console.log(util.format("Usage: %s [ --scan | <file> ] \n", path.basename(process.argv[1])));
   } else {
-    console.log(colorize(data));
+    buffer = data;
   }
 }
 
+function title(str, success) {
+  var prefix = (success) 
+  ? '\u001b[0;30m[OK]\u001b[0m' 
+  : '\u001b[0;31m[FAIL]\u001b[0m';
+  console.log(util.format("%s \u001b[1;30m%s\u001b[0m\n", prefix, str));
+}
+
 function colorize(data) {
-  return data.replace(colorRegex, '$1➜ \u001b[0;30m$2:\u001b[0m\u001b[1;30m$3 \u001b[0;31m$5\u001b[0m$6');
+  data = data.replace(colorRegex, '$1➜ \u001b[0;30m$2:\u001b[0m\u001b[1;30m$3 \u001b[0;31m$5\u001b[0m$6');
+  console.log(data);
 }
 
 // Run command w/args
 console.log('');
 var jshint = cp.spawn(cmd, args);
 
-jshint.stdout
-  .on('data', logger)
-  .on('error', logger);
+jshint.stdout.on('data', logger);
+jshint.on('exit', function(err) {
+  if (!isHelp && err === 0) {
+    title(args[0], true);
+  } else {
+    title(args[0], false);
+    colorize(buffer);
+  }
+})
