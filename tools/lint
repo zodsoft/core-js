@@ -28,6 +28,7 @@ function logger(data) {
   isHelp = (data.indexOf('Usage: jshint path path2 [options]') >= 0);
   if (isHelp) {
     console.log(util.format("Usage: %s [ --scan | <file> ] \n", path.basename(process.argv[1])));
+    process.exit();
   } else {
     buffer = data;
   }
@@ -35,7 +36,7 @@ function logger(data) {
 
 function title(str, success) {
   var prefix = (success) 
-  ? '\u001b[0;30m[OK]\u001b[0m' 
+  ? '\u001b[0;32m[OK]\u001b[0m' 
   : '\u001b[0;31m[FAIL]\u001b[0m';
   console.log(util.format("%s \u001b[1;30m%s\u001b[0m\n", prefix, str));
 }
@@ -57,4 +58,4 @@ jshint.on('exit', function(err) {
     title(args[0], false);
     colorize(buffer);
   }
-})
+});
