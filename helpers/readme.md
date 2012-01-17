@@ -1,4 +1,4 @@
 
-# Framework Helpers
+# View Helpers
 
-Extra classes that provide additional functionality
+Provide methods to be used in the different views.
