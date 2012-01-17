@@ -42,6 +42,8 @@ var p = path.resolve(rootPath, '../'),
     scanIgnore = ['node_modules'],
     scanDirs = [];
 
+process.chdir(p);
+
 if (scan >= 0) {
   args.shift();
   var i,dir,stat,files = fs.readdirSync(p);
