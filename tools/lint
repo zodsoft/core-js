@@ -7,7 +7,10 @@
 var isHelp, buffer,
     path = require('path'),
     util = require('util'),
-    cp = require('child_process');
+    cp = require('child_process'),
+    fileModule = require('file');
+    
+console.log('');
 
 // Framework path
 var rootPath = path.dirname(__filename);
@@ -46,16 +49,39 @@ function colorize(data) {
   console.log(data);
 }
 
-// Run command w/args
-console.log('');
-var jshint = cp.spawn(cmd, args);
+if (process.argv.indexOf('--scan') >= 0) {
+  
+  // Process multiple files
+  var exclude = /^(node_modules)/,
+      p = path.resolve(rootPath, '../'),
+      path, files, file, i;
+    
+  cp.exec("find . | grep '\.js$'", function(err, stdout, stderr) {
+    if (err) throw err;
+    else {
+      files = stdout.replace(/\n?\.\//g, '\n').split('\n');
+      for (i=0; i < files.length; i++) {
+        file = files[i];
+        if (exclude.test(file)) continue;
+        console.log(file);
+      }
+    }
+  })
+  
+} else {
+  
+  // Run command w/args
+  var jshint = cp.spawn(cmd, args);
+  jshint.stdout.on('data', logger);
+  jshint.on('exit', function(err) {
+    if (!isHelp && err === 0) {
+      title(args[0], true);
+    } else {
+      title(args[0], false);
+      colorize(buffer);
+    }
+  });
+  
+}
 
-jshint.stdout.on('data', logger);
-jshint.on('exit', function(err) {
-  if (!isHelp && err === 0) {
-    title(args[0], true);
-  } else {
-    title(args[0], false);
-    colorize(buffer);
-  }
-});
+
