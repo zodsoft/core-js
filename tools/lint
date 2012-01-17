@@ -6,6 +6,7 @@
  
 var path = require('path'),
     util = require('util'),
+    fs = require('fs'),
     cp = require('child_process');
 
 // Framework path
@@ -25,7 +26,7 @@ var colorRegex = /(\n)?(.*?): line (\d+), (.*?), (.*?)(\n)/g
 function logger(data) {
   data = data.toString('utf-8');
   if (data.indexOf('Usage: jshint path path2 [options]') >= 0) {
-    console.log(util.format("Usage: %s file1 file2\n", path.basename(process.argv[1])));
+    console.log(util.format("Usage: %s [ --scan | file1 file2 ]\n", path.basename(process.argv[1])));
   } else {
     console.log(colorize(data));
   }
@@ -33,6 +34,25 @@ function logger(data) {
 
 function colorize(data) {
   return data.replace(colorRegex, '$1➜ \u001b[0;30m$2:\u001b[0m\u001b[1;30m$3 \u001b[0;31m$5\u001b[0m$6');
+}
+
+// Detect scan
+var p = path.resolve(rootPath, '../'),
+    scan = args.indexOf('--scan'),
+    scanIgnore = ['node_modules'],
+    scanDirs = [];
+
+if (scan >= 0) {
+  args.shift();
+  var i,dir,stat,files = fs.readdirSync(p);
+  for (i=0; i < files.length; i++) {
+    dir = files[i];
+    if (scanIgnore.indexOf(dir) >= 0 || dir.charAt(0) == '.' || fs.lstatSync(dir).isFile())  continue;
+    else {
+      scanDirs.push(dir + '/');
+    }
+  }
+  args = scanDirs.concat(args);
 }
 
 // Run command w/args
