@@ -181,6 +181,15 @@ RedisStorage.prototype.updateHash = function(key, object, callback) {
   this.client.hset.apply(this.client, args);
 }
 
+/** Storage API deleteFromHash */
+
+RedisStorage.prototype.deleteFromHash = function(hash, key, callback) {
+  var self = this;
+  this.client.hdel(hash, key, function(err, result) {
+    callback.call(self, err);
+  });
+}
+
 /** Storage API delete */
 
 RedisStorage.prototype.delete = function(key, callback) {
