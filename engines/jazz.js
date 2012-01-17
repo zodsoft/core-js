@@ -21,6 +21,7 @@ Jazz.prototype.render = function(data) {
   if (func === null) {
     tpl = jazz.compile(data);
     func = function(locals, callback) {
+      /*jshint evil:true */
       tpl.eval(locals, callback);
     }
     this.cacheFunction(func, arguments);
