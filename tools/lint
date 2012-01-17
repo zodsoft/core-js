@@ -3,8 +3,9 @@
 /*
  * Linting tool, using jshint with options from ../jshint.json
  */
-
+ 
 var path = require('path'),
+    util = require('util'),
     cp = require('child_process');
 
 // Framework path
@@ -23,7 +24,11 @@ var colorRegex = /(\n)?(.*?): line (\d+), (.*?), (.*?)(\n)/g
 // Functions
 function logger(data) {
   data = data.toString('utf-8');
-  console.log(colorize(data));
+  if (data.indexOf('Usage: jshint path path2 [options]') >= 0) {
+    console.log(util.format("Usage: %s [--scan] file\n", path.basename(process.argv[1])));
+  } else {
+    console.log(colorize(data));
+  }
 }
 
 function colorize(data) {
